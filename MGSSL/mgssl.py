@@ -1405,7 +1405,14 @@ for seed in range(50):
         print("train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
 
     print("Seed:", seed)
+    
+    test_y = []
+    for d, s in enumerate(test_dataset):
+        y_tmp = [0 if i == -1 else i for i in s.y.numpy()]
+        test_y.append(y_tmp[0])
+        
     pred = [int(i[0]) for i in test_pred]
+    
     tast_roc_list.append(test_task_acc)
     test_acc_list.append(accuracy_score(test_y, pred))
     test_prec_list.append(precision_score(test_y, pred))
