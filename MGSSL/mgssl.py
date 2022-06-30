@@ -39,8 +39,29 @@ print('GPU: ', torch.cuda.get_device_name(0))
 #%%
 device = torch.device("cuda:0")
 
-dataset_name = "geno"
-num_task = 1
+dataset_name = "tox21"
+num_task = 2
+
+if dataset_name == "tox21":
+    num_task = 12
+elif dataset_name == "hiv":
+    num_task = 1
+elif dataset_name == "pcba":
+    num_task = 128
+elif dataset_name == "muv":
+    num_task = 17
+elif dataset_name == "bace":
+    num_task = 1
+elif dataset_name == "bbbp":
+    num_task = 1
+elif dataset_name == "toxcast":
+    num_task = 617
+elif dataset_name == "sider":
+    num_task = 27
+elif dataset_name == "clintox":
+    num_task = 2
+elif dataset_name == 'geno':
+    num_task = 1
 
 
 #%%
@@ -1422,15 +1443,22 @@ for seed in range(50):
 
     
 #%%
-column_average = [sum(sub_list) / len(sub_list) for sub_list in zip(*tast_roc_list)]
+# column_average = [sum(sub_list) / len(sub_list) for sub_list in zip(*tast_roc_list)]
 row_average = [sum(sub_list) / len(sub_list) for sub_list in tast_roc_list]
 
 
 from scipy.stats import sem
 
-print(np.mean(test_f1_list))
-print(sem(test_f1_list))
+# print(np.mean(row_average))
+# print(sem(row_average))
 # print(np.std(row_average))
+
+print('Precision: ', np.mean(test_prec_list), '(', sem(test_prec_list), ')',
+      '\nRecall: ', np.mean(test_recall_list), '(', sem(test_recall_list), ')',
+      '\nF1: ', np.mean(test_f1_list), '(', sem(test_f1_list), ')',
+      '\nAUC: ', np.mean(row_average), '(', sem(row_average), ')',
+      '\nAccuracy: ', np.mean(test_acc_list), '(', sem(test_acc_list), ')'
+      )
 
 
 #%%
@@ -1446,14 +1474,5 @@ pd.crosstab(test_y, pred, rownames = ['true'], colnames = ['pred'])
 print(classification_report(test_y, pred, digits = 3))
 
 
-#%%
-# import openpyxl
-# input_df = pd.read_csv('dataset/geno/raw/geno.csv', sep = ',')
-# input_df['Genotoxicity'].value_counts(normalize=True)
-
-# d = pd.read_excel('C:/Users/SOYOUNG/Desktop/toxic/data/genotoxicity/genotoxicity_input.xlsx', sheet_name = 'default_1')
-# d['Genotoxicity(0.5기준)'].value_counts()
-# d['Genotoxicity(보수)'].value_counts()
-# d['Genotoxicity(진보)'].value_counts()
 
 
