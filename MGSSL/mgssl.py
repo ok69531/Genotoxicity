@@ -39,8 +39,7 @@ print('GPU: ', torch.cuda.get_device_name(0))
 #%%
 device = torch.device("cuda:0")
 
-dataset_name = "tox21"
-num_task = 2
+dataset_name = "hiv"
 
 if dataset_name == "tox21":
     num_task = 12
@@ -1409,7 +1408,7 @@ for seed in range(50):
 
     eval_train = 1
 
-    for epoch in range(1, 15+1):
+    for epoch in range(1, 10+1):
         # print("====epoch " + str(epoch))
         
         train(model, device, train_loader, optimizer)
