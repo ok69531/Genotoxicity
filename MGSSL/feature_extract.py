@@ -699,7 +699,7 @@ num_bond_direction = 3
 #%%
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
-loader = DataLoader(dataset, batch_size = 8, shuffle = False, num_workers = 0)
+loader = DataLoader(dataset, batch_size = 32, shuffle = False, num_workers = 0)
 
 model = GNN_extract(5, 300, num_tasks=num_task, JK='last', drop_ratio=0.2, graph_pooling='mean', gnn_type='gin').to(device)
 model.from_pretrained('saved_model/init.pth')
@@ -732,6 +732,7 @@ print('count', '\n', pd.Series(y_true).value_counts(),
 #%%
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE
 
 logit_auc = []
 logit_prec = []
@@ -741,6 +742,9 @@ logit_f1 = []
 for i in tqdm(range(50)):
     x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
     
+    sm = SMOTE(random_state = i)
+    x_train, y_train = sm.fit_sample(x_train, y_train)
+        
     logit = LogisticRegression(random_state = i)
     logit.fit(x_train, y_train)
     
@@ -770,11 +774,15 @@ svm_f1 = []
 for i in tqdm(range(50)):
     x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.2, random_state = i)
     
+    sm = SMOTE(random_state = i)
+    x_train, y_train = sm.fit_sample(x_train, y_train)
+    
     svm = SVC(random_state = i, probability = True)
     svm.fit(x_train, y_train)
     
-    svm_pred = svm.predict(x_test)
+    # svm_pred = svm.predict(x_test)
     svm_pred_prob = svm.predict_proba(x_test)[:, 1]
+    svm_pred = [1 if i > 0.5 else 0 for i in svm_pred_prob]
     
     svm_auc.append(roc_auc_score(y_test, svm_pred_prob))
     svm_prec.append(precision_score(y_test, svm_pred))
@@ -786,7 +794,7 @@ print('auc: ', np.mean(svm_auc).round(3), '(', (np.std(svm_auc, ddof = 1) / np.s
       '\nprecision: ', np.mean(svm_prec).round(3), '(', (np.std(svm_prec, ddof = 1)/np.sqrt(len(svm_prec))).round(3), ')',
       '\nrecall: ', np.mean(svm_recall).round(3), '(', (np.std(svm_recall, ddof = 1)/np.sqrt(len(svm_recall))).round(3), ')',
       '\nf1: ', np.mean(svm_f1).round(3), '(', (np.std(svm_f1, ddof = 1)/np.sqrt(len(svm_f1))).round(3), ')')
-    
+
 
 #%%
 from sklearn.ensemble import RandomForestClassifier
@@ -798,6 +806,9 @@ rf_f1 = []
 
 for i in tqdm(range(50)):
     x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
+    
+    sm = SMOTE(random_state = i)
+    x_train, y_train = sm.fit_sample(x_train, y_train)
     
     rf = RandomForestClassifier(random_state = i)
     rf.fit(x_train, y_train)
