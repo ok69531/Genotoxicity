@@ -39,7 +39,7 @@ print('GPU: ', torch.cuda.get_device_name(0))
 #%%
 device = torch.device("cuda:0")
 
-dataset_name = "hiv"
+dataset_name = "bace"
 
 if dataset_name == "tox21":
     num_task = 12
@@ -1408,7 +1408,7 @@ for seed in range(50):
 
     eval_train = 1
 
-    for epoch in range(1, 10+1):
+    for epoch in range(1, 15+1):
         # print("====epoch " + str(epoch))
         
         train(model, device, train_loader, optimizer)
@@ -1452,11 +1452,11 @@ from scipy.stats import sem
 # print(sem(row_average))
 # print(np.std(row_average))
 
-print('Precision: ', np.mean(test_prec_list), '(', sem(test_prec_list), ')',
-      '\nRecall: ', np.mean(test_recall_list), '(', sem(test_recall_list), ')',
-      '\nF1: ', np.mean(test_f1_list), '(', sem(test_f1_list), ')',
-      '\nAUC: ', np.mean(row_average), '(', sem(row_average), ')',
-      '\nAccuracy: ', np.mean(test_acc_list), '(', sem(test_acc_list), ')'
+print('Precision: ', np.mean(test_prec_list).round(3), '(', sem(test_prec_list).round(3), ')',
+      '\nRecall: ', np.mean(test_recall_list).round(3), '(', sem(test_recall_list).round(3), ')',
+      '\nF1: ', np.mean(test_f1_list).round(3), '(', sem(test_f1_list).round(3), ')',
+      '\nAUC: ', np.mean(row_average).round(3), '(', sem(row_average).round(3), ')',
+      '\nAccuracy: ', np.mean(test_acc_list).round(3), '(', sem(test_acc_list).round(3), ')'
       )
 
 
