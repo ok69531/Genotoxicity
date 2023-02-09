@@ -3,7 +3,7 @@ from importlib.util import module_from_spec
 import os
 import random
 import pickle
-import openpyxl
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,7 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_sco
 from itertools import compress, repeat, product, chain
 from sklearn.model_selection import StratifiedKFold
 
+warnings.filterwarnings('ignore')
 
 #%%
 import torch
@@ -34,7 +35,7 @@ print('GPU: ', torch.cuda.get_device_name(0))
 #%%
 device = torch.device("cuda:0")
 
-dataset_name = "geno"
+dataset_name = "hiv"
 
 if dataset_name == "tox21":
     num_task = 12
@@ -102,117 +103,196 @@ y_true = [0 if i == -1 else 1 for i in y_true]
 print('count', '\n', pd.Series(y_true).value_counts(),
       '\nratio', '\n',  pd.Series(y_true).value_counts(normalize = True).round(3))
 
+# pd.concat([pd.DataFrame(feature), pd.DataFrame({'y': y_true})], 1).to_csv('../../../hiv_feature.csv', header = True, index = False)
+
+#%%
+from imblearn.over_sampling import SMOTE
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, GridSearchCV, KFold
+
+
+def LogitSMOTE(ratio):
+    
+    logit_auc = []
+    logit_prec = []
+    logit_recall = []
+    logit_acc = []
+    logit_f1 = []
+    
+    for i in tqdm(range(15)):
+        x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
+        
+        sm = SMOTE(random_state = i, sampling_strategy = {1: int(len(y_train)*ratio)})
+        x_train, y_train = sm.fit_sample(x_train, y_train)
+        
+        logit = LogisticRegression(random_state = i)
+        logit.fit(x_train, y_train)
+        
+        # logit_pred = logit.predict(x_test)
+        logit_pred_prob = logit.predict_proba(x_test)[:, 1]
+        logit_pred = [1 if i > 0.5 else 0 for i in logit_pred_prob]
+        
+        logit_auc.append(roc_auc_score(y_test, logit_pred_prob))
+        logit_prec.append(precision_score(y_test, logit_pred))
+        logit_recall.append(recall_score(y_test, logit_pred))
+        logit_acc.append(accuracy_score(y_test, logit_pred))
+        logit_f1.append(f1_score(y_test, logit_pred))
+
+
+    print('ratio: ', ratio,
+          '\nauc: ', np.mean(logit_auc).round(3), '(', (np.std(logit_auc, ddof = 1) / np.sqrt(len(logit_auc))).round(3), ')',
+          '\nprecision: ', np.mean(logit_prec).round(3), '(', (np.std(logit_prec, ddof = 1)/np.sqrt(len(logit_prec))).round(3), ')',
+          '\nrecall: ', np.mean(logit_recall).round(3), '(', (np.std(logit_recall, ddof = 1)/np.sqrt(len(logit_recall))).round(3), ')',
+          '\nacuracy: ', np.mean(logit_acc).round(3), '(', (np.std(logit_acc, ddof = 1)/np.sqrt(len(logit_acc))).round(3) ,')',
+          '\nf1: ', np.mean(logit_f1).round(3), '(', (np.std(logit_f1, ddof = 1)/np.sqrt(len(logit_f1))).round(3), ')')
+
+
+def LogitCV_SMOTE(params, ratio):
+    
+    logit_auc = []
+    logit_prec = []
+    logit_recall = []
+    logit_acc = []
+    logit_f1 = []
+    
+    for i in tqdm(range(15)):
+        x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
+        
+        sm = SMOTE(random_state = i, sampling_strategy = {1: int(len(y_train)*ratio)})
+        x_train, y_train = sm.fit_sample(x_train, y_train)
+        
+        estimator = LogisticRegression(random_state = i)
+        kf = KFold(random_state = i, n_splits = 5, shuffle = True)
+        grid_search = GridSearchCV(estimator = estimator,
+                                param_grid = params,
+                                cv = kf, 
+                                scoring = 'f1',
+                                n_jobs = -1, 
+                                verbose = 10)
+        grid_search.fit(x_train, y_train)
+        
+        logit = LogisticRegression(**grid_search.best_params_)
+        logit.fit(x_train, y_train)
+        
+        # logit_pred = logit.predict(x_test)
+        logit_pred_prob = logit.predict_proba(x_test)[:, 1]
+        logit_pred = [1 if i > 0.5 else 0 for i in logit_pred_prob]
+        
+        logit_auc.append(roc_auc_score(y_test, logit_pred_prob))
+        logit_prec.append(precision_score(y_test, logit_pred))
+        logit_recall.append(recall_score(y_test, logit_pred))
+        logit_acc.append(accuracy_score(y_test, logit_pred))
+        logit_f1.append(f1_score(y_test, logit_pred))
+
+
+    print('ratio: ', ratio,
+          '\nauc: ', np.mean(logit_auc).round(3), '(', (np.std(logit_auc, ddof = 1) / np.sqrt(len(logit_auc))).round(3), ')',
+          '\nprecision: ', np.mean(logit_prec).round(3), '(', (np.std(logit_prec, ddof = 1)/np.sqrt(len(logit_prec))).round(3), ')',
+          '\nrecall: ', np.mean(logit_recall).round(3), '(', (np.std(logit_recall, ddof = 1)/np.sqrt(len(logit_recall))).round(3), ')',
+          '\nacuracy: ', np.mean(logit_acc).round(3), '(', (np.std(logit_acc, ddof = 1)/np.sqrt(len(logit_acc))).round(3) ,')',
+          '\nf1: ', np.mean(logit_f1).round(3), '(', (np.std(logit_f1, ddof = 1)/np.sqrt(len(logit_f1))).round(3), ')')
 
 
 #%%
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from imblearn.over_sampling import SMOTE
-
-logit_auc = []
-logit_prec = []
-logit_recall = []
-logit_acc = []
-logit_f1 = []
-
-for i in tqdm(range(50)):
-    x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
-    
-    sm = SMOTE(random_state = i)
-    x_train, y_train = sm.fit_sample(x_train, y_train)
-        
-    logit = LogisticRegression(random_state = i)
-    logit.fit(x_train, y_train)
-    
-    # logit_pred = logit.predict(x_test)
-    logit_pred_prob = logit.predict_proba(x_test)[:, 1]
-    logit_pred = [1 if i > 0.5 else 0 for i in logit_pred_prob]
-    
-    logit_auc.append(roc_auc_score(y_test, logit_pred_prob))
-    logit_prec.append(precision_score(y_test, logit_pred))
-    logit_recall.append(recall_score(y_test, logit_pred))
-    logit_acc.append(accuracy_score(y_test, logit_pred))
-    logit_f1.append(f1_score(y_test, logit_pred))
+ratio = 0.9
+LogitSMOTE(ratio)
 
 
-print('auc: ', np.mean(logit_auc).round(3), '(', (np.std(logit_auc, ddof = 1) / np.sqrt(len(logit_auc))).round(3), ')',
-      '\nprecision: ', np.mean(logit_prec).round(3), '(', (np.std(logit_prec, ddof = 1)/np.sqrt(len(logit_prec))).round(3), ')',
-      '\nrecall: ', np.mean(logit_recall).round(3), '(', (np.std(logit_recall, ddof = 1)/np.sqrt(len(logit_recall))).round(3), ')',
-      '\nacuracy: ', np.mean(logit_acc).round(3), '(', (np.std(logit_acc, ddof = 1)/np.sqrt(len(logit_acc))).round(3) ,')',
-      '\nf1: ', np.mean(logit_f1).round(3), '(', (np.std(logit_f1, ddof = 1)/np.sqrt(len(logit_f1))).round(3), ')')
+# params = {
+#     'C': np.arange(50, 160, 10),
+#     'penalty': ['l1', 'l2'],
+#     'solver': ['linlinear', 'saga'],
+#     'max_iter': [500]
+# }
+# LogitCV_SMOTE(params, 0.2)
 
 
 #%%
 from sklearn.svm import SVC
 
-svm_auc = []
-svm_prec = []
-svm_recall = []
-svm_acc = []
-svm_f1 = []
+def SVMSMOTE(ratio):
+        
+    svm_auc = []
+    svm_prec = []
+    svm_recall = []
+    svm_acc = []
+    svm_f1 = []
 
-for i in tqdm(range(50)):
-    x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.2, random_state = i)
-    
-    sm = SMOTE(random_state = i)
-    x_train, y_train = sm.fit_sample(x_train, y_train)
-    
-    svm = SVC(random_state = i, probability = True)
-    svm.fit(x_train, y_train)
-    
-    # svm_pred = svm.predict(x_test)
-    svm_pred_prob = svm.predict_proba(x_test)[:, 1]
-    svm_pred = [1 if i > 0.5 else 0 for i in svm_pred_prob]
-    
-    svm_auc.append(roc_auc_score(y_test, svm_pred_prob))
-    svm_prec.append(precision_score(y_test, svm_pred))
-    svm_recall.append(recall_score(y_test, svm_pred))
-    svm_acc.append(accuracy_score(y_test, svm_pred))
-    svm_f1.append(f1_score(y_test, svm_pred))
+    for i in tqdm(range(15)):
+        x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.2, random_state = i)
+        
+        sm = SMOTE(random_state = i, sampling_strategy = {1: int(len(y_train)*ratio)})
+        x_train, y_train = sm.fit_sample(x_train, y_train)
+        
+        svm = SVC(random_state = i, probability = True)
+        svm.fit(x_train, y_train)
+        
+        # svm_pred = svm.predict(x_test)
+        svm_pred_prob = svm.predict_proba(x_test)[:, 1]
+        svm_pred = [1 if i > 0.5 else 0 for i in svm_pred_prob]
+        
+        svm_auc.append(roc_auc_score(y_test, svm_pred_prob))
+        svm_prec.append(precision_score(y_test, svm_pred))
+        svm_recall.append(recall_score(y_test, svm_pred))
+        svm_acc.append(accuracy_score(y_test, svm_pred))
+        svm_f1.append(f1_score(y_test, svm_pred))
 
 
-print('auc: ', np.mean(svm_auc).round(3), '(', (np.std(svm_auc, ddof = 1) / np.sqrt(len(svm_auc))).round(3), ')',
-      '\nprecision: ', np.mean(svm_prec).round(3), '(', (np.std(svm_prec, ddof = 1)/np.sqrt(len(svm_prec))).round(3), ')',
-      '\nrecall: ', np.mean(svm_recall).round(3), '(', (np.std(svm_recall, ddof = 1)/np.sqrt(len(svm_recall))).round(3), ')',
-      '\nacuracy: ', np.mean(svm_acc).round(3), '(', (np.std(svm_acc, ddof = 1)/np.sqrt(len(svm_acc))).round(3) ,')',
-      '\nf1: ', np.mean(svm_f1).round(3), '(', (np.std(svm_f1, ddof = 1)/np.sqrt(len(svm_f1))).round(3), ')')
+    print('ratio: ', ratio,
+          '\nauc: ', np.mean(svm_auc).round(3), '(', (np.std(svm_auc, ddof = 1) / np.sqrt(len(svm_auc))).round(3), ')',
+          '\nprecision: ', np.mean(svm_prec).round(3), '(', (np.std(svm_prec, ddof = 1)/np.sqrt(len(svm_prec))).round(3), ')',
+          '\nrecall: ', np.mean(svm_recall).round(3), '(', (np.std(svm_recall, ddof = 1)/np.sqrt(len(svm_recall))).round(3), ')',
+          '\nacuracy: ', np.mean(svm_acc).round(3), '(', (np.std(svm_acc, ddof = 1)/np.sqrt(len(svm_acc))).round(3) ,')',
+          '\nf1: ', np.mean(svm_f1).round(3), '(', (np.std(svm_f1, ddof = 1)/np.sqrt(len(svm_f1))).round(3), ')')
 
+
+#%%
+ratio = 0.9
+SVMSMOTE(ratio)
 
 #%%
 from sklearn.ensemble import RandomForestClassifier
 
-rf_auc = []
-rf_prec = []
-rf_recall = []
-rf_acc = []
-rf_f1 = []
 
-for i in tqdm(range(50)):
-    x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
+def RFSMOTE(ratio):
     
-    sm = SMOTE(random_state = i)
-    x_train, y_train = sm.fit_sample(x_train, y_train)
+    rf_auc = []
+    rf_prec = []
+    rf_recall = []
+    rf_acc = []
+    rf_f1 = []
     
-    rf = RandomForestClassifier(random_state = i)
-    rf.fit(x_train, y_train)
-    
-    # rf_pred = rf.predict(x_test)
-    rf_pred_prob = rf.predict_proba(x_test)[:, 1]
-    rf_pred = [1 if i > 0.5 else 0 for i in rf_pred_prob]
-    
-    rf_auc.append(roc_auc_score(y_test, rf_pred_prob))
-    rf_prec.append(precision_score(y_test, rf_pred))
-    rf_recall.append(recall_score(y_test, rf_pred))
-    rf_acc.append(accuracy_score(y_test, rf_pred))
-    rf_f1.append(f1_score(y_test, rf_pred))
+    for i in tqdm(range(15)):
+        x_train, x_test, y_train, y_test = train_test_split(feature, y_true, test_size = 0.20, random_state = i)
+        
+        sm = SMOTE(random_state = i, sampling_strategy = {1: int(len(y_train)*ratio)})
+        x_train, y_train = sm.fit_sample(x_train, y_train)
+        
+        rf = RandomForestClassifier(random_state = i)
+        rf.fit(x_train, y_train)
+        
+        # rf_pred = rf.predict(x_test)
+        rf_pred_prob = rf.predict_proba(x_test)[:, 1]
+        rf_pred = [1 if i > 0.5 else 0 for i in rf_pred_prob]
+        
+        rf_auc.append(roc_auc_score(y_test, rf_pred_prob))
+        rf_prec.append(precision_score(y_test, rf_pred))
+        rf_recall.append(recall_score(y_test, rf_pred))
+        rf_acc.append(accuracy_score(y_test, rf_pred))
+        rf_f1.append(f1_score(y_test, rf_pred))
 
 
-print('auc: ', np.mean(rf_auc).round(3), '(', (np.std(rf_auc, ddof = 1) / np.sqrt(len(rf_auc))).round(3), ')',
-      '\nprecision: ', np.mean(rf_prec).round(3), '(', (np.std(rf_prec, ddof = 1)/np.sqrt(len(rf_prec))).round(3), ')',
-      '\nrecall: ', np.mean(rf_recall).round(3), '(', (np.std(rf_recall, ddof = 1)/np.sqrt(len(rf_recall))).round(3), ')',
-      '\nacuracy: ', np.mean(rf_acc).round(3), '(', (np.std(rf_acc, ddof = 1)/np.sqrt(len(rf_acc))).round(3) ,')',
-      '\nf1: ', np.mean(rf_f1).round(3), '(', (np.std(rf_f1, ddof = 1)/np.sqrt(len(rf_f1))).round(3), ')')
+    print('ratio:', ratio,
+          '\nauc: ', np.mean(rf_auc).round(3), '(', (np.std(rf_auc, ddof = 1) / np.sqrt(len(rf_auc))).round(3), ')',
+          '\nprecision: ', np.mean(rf_prec).round(3), '(', (np.std(rf_prec, ddof = 1)/np.sqrt(len(rf_prec))).round(3), ')',
+          '\nrecall: ', np.mean(rf_recall).round(3), '(', (np.std(rf_recall, ddof = 1)/np.sqrt(len(rf_recall))).round(3), ')',
+          '\nacuracy: ', np.mean(rf_acc).round(3), '(', (np.std(rf_acc, ddof = 1)/np.sqrt(len(rf_acc))).round(3) ,')',
+          '\nf1: ', np.mean(rf_f1).round(3), '(', (np.std(rf_f1, ddof = 1)/np.sqrt(len(rf_f1))).round(3), ')')
 
+
+#%%
+ratio = 0.9
+RFSMOTE(ratio)
 
 #%%
 from itertools import product
