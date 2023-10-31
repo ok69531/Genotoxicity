@@ -64,12 +64,16 @@ tg_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-pa
 driver.find_element(By.XPATH, tg_path).click()
 time.sleep(0.5)
 
-tg473_path1 = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[35]'
-driver.find_element(By.XPATH, tg473_path1).click()
+tg476_path1 = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[37]/div'
+driver.find_element(By.XPATH, tg476_path1).click()
 time.sleep(0.5)
 
-tg473_path2 = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[36]'
-driver.find_element(By.XPATH, tg473_path2).click()
+tg476_path2 = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[38]/div'
+driver.find_element(By.XPATH, tg476_path2).click()
+time.sleep(0.5)
+
+tg476_path3 = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[50]'
+driver.find_element(By.XPATH, tg476_path3).click()
 time.sleep(0.5)
 
 save_path = '/html/body/echem-root/div/echem-substance-search-page/echem-substance-search-container/echem-substance-search/form/div/ngb-accordion[1]/div[2]/div[2]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/div/button[2]'
@@ -140,4 +144,4 @@ print(time.time() - start)
 
 
 #%%
-json.dump(result_, open('tg473_page_src.json', 'w'))
+json.dump(result_, open('tg476_page_src.json', 'w'))
