@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 
 #%%
-with open('tg473_page_src.json', 'r') as file:
+with open('tg471_page_src.json', 'r') as file:
     df = pd.DataFrame(json.load(file))
 
 
@@ -18,6 +18,18 @@ with open('tg473_page_src.json', 'r') as file:
 def remove_bracket(string):
     clean_string = re.sub('<.*?>', '', str(string))
     return clean_string
+
+
+#%%
+
+jcheck_idx = list(map(lambda x: 'jcheck' in x, df.link))
+echa_idx = list(map(lambda x: 'echa.europa' in x, df.link))
+ccr_idx = list(map(lambda x: 'ccr' in x, df.link))
+sids_idx = list(map(lambda x: 'oecdsids' in x, df.link))
+
+jcheck_df = df[jcheck_idx]
+ecah_df = df[echa_idx]
+sids_df = df[sids_idx]
 
 
 #%%
