@@ -1,0 +1,57 @@
+########## in vitro ##########
+##### TG 471
+1. 수집된 전체 데이터: 26000
+2. Genotoxicity 정보가 없거나 positive/negative의 정보가 없는 데이터 삭제 후 남은 데이터: 25410
+3. Cas number가 없는 데이터 삭제: 20750
+4. 하나의 데이터가 여러개의 결과값을 갖는 경우 중복값을 하나로 요약: 4692
+4-1. 보수적으로 진행하기 위해 여러개의 결과값중 positive가 하나라도 포함되어 있으면 해당 물질의 결과값은 positive로 설정 (파일명 tg471_consv.xlsx)
+     Positive : Negative = 498 : 4194 = 89.4% : 10.6%
+4-2. 과반수 값을 기준으로 결과값 설정. 즉. Positive >= Negative인 경우 positive로 설정 (파일명 tg471_maj.xlsx)
+     Positive : Negative = 258 : 4434 = 5.5% : 94.5%
+
+
+##### TG 473
+1. 수집된 전체 데이터: 8275
+2. Genotoxicity 정보가 없거나 positive/negative의 정보가 없는 데이터 삭제 후 남은 데이터: 7647
+3. Cas number가 없는 데이터 삭제: 6276
+4. 하나의 데이터가 여러개의 결과값을 갖는 경우 중복값을 하나로 요약: 3839
+4-1. 보수적으로 진행하기 위해 여러개의 결과값중 positive가 하나라도 포함되어 있으면 해당 물질의 결과값은 positive로 설정 (파일명 tg473_consv.xlsx)
+     Positive : Negative = 792 : 3047 = 20.6% : 79.4%
+4-2. 과반수 값을 기준으로 결과값 설정. 즉. Positive >= Negative인 경우 positive로 설정 (파일명 tg473_maj.xlsx)
+     Positive : Negative = 685 : 3154 = 17.8% : 82.2%
+
+
+##### TG 476
+1. 수집된 전체 데이터: 8144
+2. Genotoxicity 정보가 없거나 positive/negative의 정보가 없는 데이터 삭제 후 남은 데이터: 7743
+3. Cas number가 없는 데이터 삭제: 6501
+4. 하나의 데이터가 여러개의 결과값을 갖는 경우 중복값을 하나로 요약: 4202
+4-1. 보수적으로 진행하기 위해 여러개의 결과값중 positive가 하나라도 포함되어 있으면 해당 물질의 결과값은 positive로 설정 (파일명 tg476_consv.xlsx)
+     Positive : Negative = 537 : 3665 = 12.8% : 87.2%
+4-2. 과반수 값을 기준으로 결과값 설정. 즉. Positive >= Negative인 경우 positive로 설정 (파일명 tg476_maj.xlsx)
+     Positive : Negative = 374 : 3828 = 8.9% : 91.1%
+
+
+##### TG 487
+1. 수집된 전체 데이터: 1180
+2. Genotoxicity 정보가 없거나 positive/negative의 정보가 없는 데이터 삭제 후 남은 데이터: 1125
+3. Cas number가 없는 데이터 삭제: 889
+4. 하나의 데이터가 여러개의 결과값을 갖는 경우 중복값을 하나로 요약: 687
+4-1. 보수적으로 진행하기 위해 여러개의 결과값중 positive가 하나라도 포함되어 있으면 해당 물질의 결과값은 positive로 설정 (파일명 tg487_consv.xlsx)
+     Positive : Negative = 115 : 572 = 16.7% : 83.3%
+4-2. 과반수 값을 기준으로 결과값 설정. 즉. Positive >= Negative인 경우 positive로 설정 (파일명 tg473_maj.xlsx)
+     Positive : Negative = 102 : 585 = 14.8% : 85.2%
+
+
+########## in vivo ##########
+##### TG 474
+
+##### TG 475
+
+##### TG 478
+
+##### TG 483
+
+##### TG 486
+
+##### TG 488

@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 
 #%%
-with open('tg471_page_src.json', 'r') as file:
+with open('tg473_page_src.json', 'r') as file:
     df = pd.DataFrame(json.load(file))
 
 
@@ -22,6 +22,7 @@ sids_idx = list(map(lambda x: 'oecdsids' in x, df.link))
 
 jcheck_df = df[jcheck_idx].reset_index(drop = True)
 echa_df = df[echa_idx].reset_index(drop = True)
+ccr_df = df[ccr_idx].reset_index(drop = True)
 sids_df = df[sids_idx].reset_index(drop = True)
 
 
@@ -119,4 +120,4 @@ for i in tqdm(range(len(echa_df))):
 result = pd.DataFrame(result_)
 
 # save df
-result.to_excel('tg471_raw.xlsx', header = True, index = False)
+result.to_excel('tg473_raw.xlsx', header = True, index = False)
