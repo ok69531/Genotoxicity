@@ -154,7 +154,7 @@ def objective(trial):
 study = optuna.create_study(direction = 'maximize')
 study.optimize(objective, n_trials = 100)
 len(study.trials)
-ㄱstudy.best_trial.params
+study.best_trial.params
 
 smote = True
 if smote:
