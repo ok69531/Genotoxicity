@@ -77,6 +77,32 @@ model.feature_importances_
 # plt.hist(model.feature_importances_)
 # plt.show()
 # plt.close()
+import shap
+
+# explainer = shap.Explainer(model.predict_proba, ov_train_maccs)
+# shap_values = explainer(ov_train_maccs)
+# shap_val = shap_values[:, :, 1]
+
+explainer = shap.Explainer(model.predict, ov_train_maccs)
+shap_val = explainer(ov_train_maccs)
+
+shap.plots.waterfall(shap_val[0], max_display = 10)
+shap.plots.beeswarm(shap_val)
+shap.plots.bar(shap_val)
+# shap.plots.heatmap(shap_values)
+
+
+explainer = shap.TreeExplainer(model)
+shap_val = explainer(ov_train_maccs)
+shap_val[:, :, 1]
+shap.plots.waterfall(shap_val[:, :, 1][0], max_display = 10)
+shap.plots.beeswarm(shap_val[:, :, 1])
+shap.plots.bar(shap_val[:, :, 1])
+shap.summary_plot(shap_val[0])
+shap.summary_plot(shap_val[1])
+
+
+np.argsort(model.feature_importances_)[::-1]
 
 
 #%%
@@ -137,7 +163,7 @@ def objective(trial):
         'random_state': trial.suggest_int('random_state', 0, 0),
         'n_estimators': trial.suggest_int('n_estimators', 100, 150),
         'min_samples_leaf': trial.suggest_int('min_samples_leaf', 2, 10),
-        'max_depth': trial.suggest_int('max_depth', 5, 20),
+        'max_depth': trial.suggest_int('max_depth', 2, 20),
         'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
     }
     
@@ -152,7 +178,7 @@ def objective(trial):
     return f1
     
 study = optuna.create_study(direction = 'maximize')
-study.optimize(objective, n_trials = 100)
+study.optimize(objective, n_trials = 500)
 len(study.trials)
 study.best_trial.params
 
@@ -229,7 +255,8 @@ class MultiLayerPerceptron(nn.Module):
         # self.lin1 = nn.Linear(input_size, 1024)
         # self.lin2 = nn.Linear(1024, 512)
         # self.lin3 = nn.Linear(512, 256)
-        self.lin4 = nn.Linear(input_size, 64)
+        # self.lin4 = nn.Linear(input_size, 64)
+        self.lin4 = nn.LSTM(input_size, 64, 1)
         self.lin5 = nn.Linear(64, 1)
         
         # self.bn1 = nn.BatchNorm1d(1024)
@@ -244,7 +271,8 @@ class MultiLayerPerceptron(nn.Module):
         # h = nn.functional.leaky_relu(h)
         # h = self.bn3(self.lin3(h))
         # h = nn.functional.leaky_relu(h)
-        h = self.bn4(self.lin4(x))
+        h, _ = self.lin4(x)
+        h = self.bn4(h)
         h = nn.functional.relu(h)
         # h = nn.functional.leaky_relu(h)
         h = self.lin5(h)
