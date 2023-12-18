@@ -7,6 +7,8 @@ from rdkit import Chem
 from rdkit.Chem import MACCSkeys, AllChem
 
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, classification_report
 
@@ -26,25 +28,36 @@ df.Genotoxicity_maj.value_counts(normalize = True)
 df.Genotoxicity_consv.value_counts()
 df.Genotoxicity_consv.value_counts(normalize = True)
 
-
 mols = [Chem.MolFromSmiles(x) for x in df.SMILES]
 
 ecfp = np.array([list(AllChem.GetMorganFingerprintAsBitVect(x, 2, nBits=1024)) for x in mols])
-maccs = np.array([list(MACCSkeys.GenMACCSKeys(x)) for x in mols])
+maccs = np.array([list(MACCSkeys.GenMACCSKeys(x))[1:] for x in mols])
 
-maj_y = [1 if x == 'positive' else 0 for x in df.Genotoxicity_maj]
-consv_y = [1 if x == 'positive' else 0 for x in df.Genotoxicity_consv]
+maj_y = np.array([1 if x == 'positive' else 0 for x in df.Genotoxicity_maj])
+consv_y = np.array([1 if x == 'positive' else 0 for x in df.Genotoxicity_consv])
 
 
 #%%
 seed = 0
 
-train_ecfp, test_ecfp, train_maj_y, test_maj_y = train_test_split(ecfp, maj_y, test_size = 0.2, random_state = seed)
-train_ecfp, test_ecfp, train_consv_y, test_consv_y = train_test_split(ecfp, consv_y, test_size = 0.2, random_state = seed)
-train_maccs, test_maccs, train_maj_y, test_maj_y = train_test_split(maccs, maj_y, test_size = 0.2, random_state = seed)
-train_maccs, test_maccs, train_consv_y, test_consv_y = train_test_split(maccs, consv_y, test_size = 0.2, random_state = seed)
+num_valid = int(len(df) * 0.1)
+num_test = int(len(df) * 0.1)
+num_train = len(df) - (num_valid + num_test)
+
+assert num_train + num_valid + num_test == len(df)
+
+
+# train_maccs, test_maccs, train_maj_y, test_maj_y = train_test_split(maccs, consv_y, test_size = num_test, random_state = seed)
+train_maccs, test_maccs, train_maj_y, test_maj_y = train_test_split(maccs, maj_y, test_size = num_test, random_state = seed)
+
+# train_ecfp, test_ecfp, train_maj_y, test_maj_y = train_test_split(ecfp, maj_y, test_size = 0.1, random_state = seed)
+# train_ecfp, test_ecfp, train_consv_y, test_consv_y = train_test_split(ecfp, consv_y, test_size = 0.1, random_state = seed)
+# train_maccs, test_maccs, train_maj_y, test_maj_y = train_test_split(maccs, maj_y, test_size = 0.1, random_state = seed)
+# train_maccs, test_maccs, train_consv_y, test_consv_y = train_test_split(maccs, consv_y, test_size = 0.1, random_state = seed)
+
 
 model = RandomForestClassifier(random_state = seed)
+model = LogisticRegression(random_state = seed)
 model.fit(train_maccs, train_maj_y)
 pred = model.predict(test_maccs)
 pred_prob = model.predict_proba(test_maccs)[:, 1]
@@ -72,11 +85,43 @@ pred_prob = model.predict_proba(test_maccs)[:, 1]
 print(classification_report(test_maj_y, pred))
 print(f'auc: {roc_auc_score(test_maj_y, pred_prob)}')
 
-model.feature_importances_
+# model.feature_importances_
 
-# plt.hist(model.feature_importances_)
-# plt.show()
-# plt.close()
+
+#%%
+from imblearn.under_sampling import (
+    ClusterCentroids, 
+    RepeatedEditedNearestNeighbours, 
+    OneSidedSelection, 
+    NeighbourhoodCleaningRule
+)
+from imblearn.over_sampling import SMOTE
+
+under = NeighbourhoodCleaningRule()
+# under = OneSidedSelection(random_state = 0)
+# under = RepeatedEditedNearestNeighbours()
+# under = ClusterCentroids(random_state = 0)
+under_x, under_y = under.fit_resample(train_maccs, train_maj_y)
+
+# under_idx = [np.where(np.sum(train_maccs == under_x[i], axis = 1) == 166)[0].item() for i in range(len(train_maccs))]
+
+sm = SMOTE(random_state = 0)
+ov_x, ov_y = sm.fit_resample(under_x, under_y)
+
+ov_x = np.concatenate([ov_x, train_maccs])
+ov_y = np.concatenate([ov_y, train_maj_y])
+
+model = RandomForestClassifier(random_state = 0)
+model.fit(ov_x, ov_y)
+pred = model.predict(test_maccs)
+pred_prob = model.predict_proba(test_maccs)[:, 1]
+
+print(classification_report(test_maj_y, pred))
+print(f'auc: {roc_auc_score(test_maj_y, pred)}')
+
+
+
+#%%
 import shap
 
 # explainer = shap.Explainer(model.predict_proba, ov_train_maccs)
@@ -109,10 +154,11 @@ np.argsort(model.feature_importances_)[::-1]
 # https://github.com/optuna/optuna-examples/tree/main
 # https://www.kaggle.com/code/muhammetgamal5/kfold-cross-validation-optuna-tuning
 
-
 import optuna
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_validate, StratifiedKFold
+
+smote = True
 
 def binary_cross_validation(model, x, y, seed, smote = False):
     skf = StratifiedKFold(n_splits = 5, shuffle = True, random_state = seed)
@@ -133,11 +179,17 @@ def binary_cross_validation(model, x, y, seed, smote = False):
         val_x, val_y = x[val_idx], y[val_idx]
         
         if smote:
-            sm = SVMSMOTE(random_state = seed)
-            train_x, train_y = sm.fit_resample(train_x, train_y)
+            sm = SMOTE(random_state = seed)
+            # sm = SVMSMOTE(random_state = seed)
+            under = NeighbourhoodCleaningRule()
+            
+            und_x, und_y = under.fit_resample(train_x, train_y)
+            ov_x, ov_y = sm.fit_resample(und_x, und_y)
         else:
             pass
         
+        train_x = np.concatenate([ov_x, train_x])
+        train_y = np.concatenate([ov_y, train_y])
         model.fit(train_x, train_y)
         
         train_pred = model.predict(train_x)
@@ -161,7 +213,7 @@ def binary_cross_validation(model, x, y, seed, smote = False):
 def objective(trial):
     params = {
         'random_state': trial.suggest_int('random_state', 0, 0),
-        'n_estimators': trial.suggest_int('n_estimators', 100, 150),
+        'n_estimators': trial.suggest_int('n_estimators', 80, 150),
         'min_samples_leaf': trial.suggest_int('min_samples_leaf', 2, 10),
         'max_depth': trial.suggest_int('max_depth', 2, 20),
         'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
@@ -172,23 +224,28 @@ def objective(trial):
     # cv_result = cross_validate(clf, train_maccs, train_maj_y, scoring = 'f1_macro')
     # f1 = cv_result['test_score'].mean()
     
-    cv_result = binary_cross_validation(clf, train_maccs, np.array(train_maj_y), seed = 0, smote = True)
+    cv_result = binary_cross_validation(clf, train_maccs, np.array(train_maj_y), seed = 0, smote = smote)
     f1 = cv_result['val_f1']
     
     return f1
     
 study = optuna.create_study(direction = 'maximize')
-study.optimize(objective, n_trials = 500)
-len(study.trials)
-study.best_trial.params
+study.optimize(objective, n_trials = 300)
+# len(study.trials)
+# study.best_trial.params
 
-smote = True
 if smote:
-    sm = SVMSMOTE(random_state=0)
+    sm = SMOTE(random_state=0)
+    # sm = SVMSMOTE(random_state=0)
+    under = NeighbourhoodCleaningRule()
+    train_x, train_y = under.fit_resample(train_maccs, train_maj_y)
     ov_x, ov_y = sm.fit_resample(train_maccs, train_maj_y)
+    ov_x = np.concatenate([ov_x, train_maccs])
+    ov_y = np.concatenate([ov_y, train_maj_y])
 else:
     pass
 
+print(f'best param: {study.best_trial.params}')
 clf = RandomForestClassifier(**study.best_trial.params)
 if smote:
     clf.fit(ov_x, ov_y)
@@ -198,6 +255,7 @@ pred = clf.predict(test_maccs)
 pred_prob = clf.predict_proba(test_maccs)[:, 1]
 
 print(classification_report(test_maj_y, pred))
+# print(classification_report(test_maj_y, np.where(pred_prob >= 0.3, 1, 0)))
 print(f'auc: {roc_auc_score(test_maj_y, pred_prob)}')
 
 
