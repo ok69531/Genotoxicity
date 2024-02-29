@@ -13,6 +13,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, classification_report
 
 from imblearn.over_sampling import SMOTE, SVMSMOTE
+from imblearn.combine import SMOTETomek
+from imblearn.under_sampling import TomekLinks
 
 import matplotlib.pyplot as plt
 plt.rcParams['figure.dpi'] = 300
