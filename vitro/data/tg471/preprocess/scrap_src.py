@@ -48,12 +48,17 @@ vitro_path = '//*[@id="QU.SE.7.6-genetic-toxicity"]/div/div/div[1]/div[3]'
 driver.find_element(By.XPATH, vitro_path).click()
 time.sleep(0.5)
 
-info_type_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[1]/div/div/div/ng-select/div/div'
+info_type_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[1]/div/div/div/ng-select/div/span'
+# info_type_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[1]/div/div/div/ng-select/div/div'
 driver.find_element(By.XPATH, info_type_path).click()
 time.sleep(0.5)
 
 experiment_path = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[3]'
 driver.find_element(By.XPATH, experiment_path).click()
+time.sleep(0.5)
+
+info_type_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[1]/div/div/div/ng-select/div/span[2]'
+driver.find_element(By.XPATH, info_type_path).click()
 time.sleep(0.5)
 
 tg_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[4]/div/div/div/ng-select/div/span'

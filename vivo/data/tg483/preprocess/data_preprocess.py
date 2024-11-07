@@ -30,6 +30,7 @@ geno_tmp.CasRN.isna().sum()
 casrn_drop_idx = geno_tmp.CasRN != '-'
 geno = geno_tmp[casrn_drop_idx].reset_index(drop = True)
 
+result = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
 
 # multiiple results -> one result
 # 하나의 화합물이 여러 개의 결과를 갖을 때, 보수적으로 진행하기 위해 하나라도 positive 결과를 갖으면 Genotoxicity를 postivie로 지정
@@ -43,14 +44,15 @@ def extract_conservative_endpoint(casrn):
         # count = geno_tmp.Genotoxicity[geno_tmp.CasRN == casrn].value_counts()
         return 'positive'
 
-geno_consv = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_consv['Genotoxicity'] = geno_consv.CasRN.map(lambda x: extract_conservative_endpoint(x))
+# geno_consv = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
+result['consv'] = result.CasRN.map(lambda x: extract_conservative_endpoint(x))
 
-geno_consv.Genotoxicity.value_counts()
-geno_consv.Genotoxicity.value_counts(normalize = True)
+result.consv.value_counts()
+result.consv.value_counts(normalize = True)
 
 
-# P개수 >= N개수면 P 
+# P개수 > N개수 -> P 
+# P개수 = N개수 -> Nan 
 def extract_majority_endpoint(casrn):
     uniq_val = geno.Genotoxicity[geno.CasRN == casrn].unique()
     length = len(uniq_val)
@@ -64,19 +66,21 @@ def extract_majority_endpoint(casrn):
         num_neg = val_count['negative']
         num_pos = val_count['positive']
         
-        if num_pos >= num_neg:
+        if num_pos > num_neg:
             return 'positive'
+        elif num_pos == num_neg:
+            return np.nan
         else:
             return 'negative'
 
 
-geno_maj = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_maj['Genotoxicity'] = geno_maj.CasRN.map(lambda x: extract_majority_endpoint(x))
+# geno_maj = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
+result['maj'] = result.CasRN.map(lambda x: extract_majority_endpoint(x))
+result.maj.isna().sum()
 
-geno_maj.Genotoxicity.value_counts()
-geno_maj.Genotoxicity.value_counts(normalize = True)
+result.maj.value_counts()
+result.maj.value_counts(normalize = True)
 
 
 #%%
-geno_consv.to_excel('../tg483_consv.xlsx', index = False, header = True)
-geno_maj.to_excel('../tg483_maj.xlsx', index = False, header = True)
+result.to_excel('../tg483.xlsx', index = False, header = True)

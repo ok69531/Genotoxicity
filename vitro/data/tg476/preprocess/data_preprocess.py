@@ -13,6 +13,12 @@ pd.set_option('mode.chained_assignment', None)
 df_tmp = pd.read_excel('tg476_raw.xlsx')
 df_tmp = df_tmp.dropna(subset = 'Genotoxicity').reset_index(drop = True)
 
+# pn_map = pd.DataFrame({'raw': df_tmp.Genotoxicity.unique()})
+# pn_map['genotoxicity'] = np.nan
+# pn_map['genotoxicity'] = list(map(lambda x: other_map.get(x), pn_map.raw))
+# pn_map['genotoxicity'][1] = 'positive'
+# pn_map.to_csv('tg476_pn_map.csv', header = True, index = False)
+
 # Genotoxicity  - negative/positive로 변환
 response = ['negative', 'positive']
 response_idx = [any(i in x for i in response) for x in df_tmp.Genotoxicity.unique()]

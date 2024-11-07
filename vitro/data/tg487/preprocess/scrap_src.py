@@ -56,6 +56,10 @@ experiment_path = '/html/body/ng-dropdown-panel/div[2]/div[2]/div[3]'
 driver.find_element(By.XPATH, experiment_path).click()
 time.sleep(0.5)
 
+tmp_path = '/html/body/echem-root'
+driver.find_element(By.XPATH, tmp_path).click()
+time.sleep(0.5)
+
 tg_path = '//*[@id="property_query-builder-panel-1"]/div/echem-property-query-panel/div[2]/div[3]/echem-property-form/form/echem-property-phrase-field[4]/div/div/div/ng-select/div/span'
 driver.find_element(By.XPATH, tg_path).click()
 time.sleep(0.5)

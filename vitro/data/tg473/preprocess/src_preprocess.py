@@ -31,45 +31,45 @@ result_ = []
 
 
 #%%
-for i in tqdm(range(len(jcheck_df))):
-    try: 
-        soup = BeautifulSoup(jcheck_df.src[i], 'html.parser')
-        chem_dict = {'source': 'jcheck'}
+# for i in tqdm(range(len(sids_df))):
+#     try: 
+#         soup = BeautifulSoup(sids_df.src[i], 'html.parser')
+#         chem_dict = {'source': 'jcheck'}
         
-        # chemical name
-        # chem_name = soup.find('div', attrs = {'id': 'SubstanceName'}).find_next('h1').text
-        # chem_dict['Chemical'] = chem_name
-        tab = soup.find('div', attrs = {'class': 'content_type3'})
-        tab_entities = tab.find_all_next('tr')
+#         # chemical name
+#         # chem_name = soup.find('div', attrs = {'id': 'SubstanceName'}).find_next('h1').text
+#         # chem_dict['Chemical'] = chem_name
+#         tab = soup.find('div', attrs = {'class': 'content_type3'})
+#         tab_entities = tab.find_all_next('tr')
         
-        test_mat_idx = ['Test material identity' in x.text for x in tab_entities].index(True)
+#         test_mat_idx = ['Test material identity' in x.text for x in tab_entities].index(True)
         
-        chem_dict['Chemical'] = tab_entities[test_mat_idx + 4].find_next('td').text
-        chem_dict['CasRN'] = tab_entities[test_mat_idx + 2].find_next('td').text
+#         chem_dict['Chemical'] = tab_entities[test_mat_idx + 4].find_next('td').text
+#         chem_dict['CasRN'] = tab_entities[test_mat_idx + 2].find_next('td').text
         
-        start_index = ['RESULTS AND DISCUSSION' in x.text for x in tab_entities].index(True)
-        end_index = ['OVERALL REMARKS' in x.text for x in tab_entities].index(True)
+#         start_index = ['RESULTS AND DISCUSSION' in x.text for x in tab_entities].index(True)
+#         end_index = ['OVERALL REMARKS' in x.text for x in tab_entities].index(True)
         
         
-        key_list, value_list = [], []
-        # re.sub('\n|\xa0', '', tab_entities[start_index + 1].text).strip() == 'Test results'
-        for j in range(start_index + 2, end_index):
-            k = tab_entities[j].find_next('th', attrs={'align': 'LEFT'}).text
-            v = tab_entities[j].find_next('td').text
+#         key_list, value_list = [], []
+#         # re.sub('\n|\xa0', '', tab_entities[start_index + 1].text).strip() == 'Test results'
+#         for j in range(start_index + 2, end_index):
+#             k = tab_entities[j].find_next('th', attrs={'align': 'LEFT'}).text
+#             v = tab_entities[j].find_next('td').text
             
-            key_list.append(k)
-            value_list.append(v)
+#             key_list.append(k)
+#             value_list.append(v)
         
-        key_val_zip = list(zip(key_list, value_list))
+#         key_val_zip = list(zip(key_list, value_list))
         
-        for j in range(1, len(key_val_zip) // 3 + 1):
-            dict_copy = chem_dict.copy()
+#         for j in range(1, len(key_val_zip) // 3 + 1):
+#             dict_copy = chem_dict.copy()
             
-            dict_copy.update(key_val_zip[(j-1)*3 : j*3])
-            result_.append(dict_copy)
+#             dict_copy.update(key_val_zip[(j-1)*3 : j*3])
+#             result_.append(dict_copy)
 
-    except AttributeError:
-        pass
+#     except AttributeError:
+#         pass
 
 
 #%%

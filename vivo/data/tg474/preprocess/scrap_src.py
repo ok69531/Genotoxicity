@@ -14,7 +14,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.service import Service
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, StaleElementReferenceException
 
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -87,16 +87,25 @@ page_num = int(driver.find_element(By.XPATH, page_num_path).text.split(' ')[-1])
 start = time.time()
 for p in range(1, page_num + 1):
     row_num_path = '/html/body/echem-root/div/echem-substance-search-page/echem-property-search-results-container/echem-property-search-results/table/tbody/tr'
-    row_num = len(driver.find_elements(By.XPATH, row_num_path))
+    try:
+        row_num = len(driver.find_elements(By.XPATH, row_num_path))
+    except StaleElementReferenceException:
+        row_num = len(driver.find_elements(By.XPATH, row_num_path))
+        
     
     row = tqdm(range(1, row_num + 1), file = sys.stdout)
     
     for i in row:
         src_dict = {}
         
-        chem_path = '//*[@id="top"]/echem-substance-search-page/echem-property-search-results-container/echem-property-search-results/table/tbody/tr[%d]/td[3]/a'
-        property_url = driver.find_element(By.XPATH, chem_path % i).get_attribute('href')
-        src_dict['link'] = property_url
+        try:
+            chem_path = '//*[@id="top"]/echem-substance-search-page/echem-property-search-results-container/echem-property-search-results/table/tbody/tr[%d]/td[3]/a'
+            property_url = driver.find_element(By.XPATH, chem_path % i).get_attribute('href')
+            src_dict['link'] = property_url
+        except StaleElementReferenceException:
+            chem_path = '//*[@id="top"]/echem-substance-search-page/echem-property-search-results-container/echem-property-search-results/table/tbody/tr[%d]/td[3]/a'
+            property_url = driver.find_element(By.XPATH, chem_path % i).get_attribute('href')
+            src_dict['link'] = property_url
         
         driver.execute_script('window.open('');')
         driver.switch_to.window(driver.window_handles[1])

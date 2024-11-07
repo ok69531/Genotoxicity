@@ -22,12 +22,6 @@ geno_tmp = df_tmp[df_tmp.Genotoxicity.isin(response_value)].reset_index(drop = T
 geno_tmp.Genotoxicity.unique()
 geno_tmp.Genotoxicity.value_counts()
 
-other_idx = [i for i in range(len(geno_tmp)) if 'other:' in geno_tmp.Genotoxicity[i]]
-other_map = {'other: weak positive effects at myelotoxic dose level': 'positive',
-             'other: weakly positive': 'positive',
-             'other: positive: statistically significant, dose-dependent increase in frequency of micronuclei': 'positive'}
-geno_tmp.Genotoxicity[other_idx] = list(map(lambda x: other_map.get(x), geno_tmp.Genotoxicity[other_idx]))
-
 
 # CasRN
 geno_tmp.CasRN.isna().sum()
@@ -35,6 +29,7 @@ geno_tmp.CasRN.isna().sum()
 
 casrn_drop_idx = geno_tmp.CasRN != '-'
 geno = geno_tmp[casrn_drop_idx].reset_index(drop = True)
+result = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
 
 
 # multiiple results -> one result
@@ -49,14 +44,14 @@ def extract_conservative_endpoint(casrn):
         # count = geno_tmp.Genotoxicity[geno_tmp.CasRN == casrn].value_counts()
         return 'positive'
 
-geno_consv = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_consv['Genotoxicity'] = geno_consv.CasRN.map(lambda x: extract_conservative_endpoint(x))
+# geno_consv = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
+result['consv'] = result.CasRN.map(lambda x: extract_conservative_endpoint(x))
 
-geno_consv.Genotoxicity.value_counts()
-geno_consv.Genotoxicity.value_counts(normalize = True)
+result.consv.value_counts()
+result.consv.value_counts(normalize = True)
 
 
-# P개수 >= N개수면 P 
+# P개수 > N개수면 P 
 def extract_majority_endpoint(casrn):
     uniq_val = geno.Genotoxicity[geno.CasRN == casrn].unique()
     length = len(uniq_val)
@@ -72,17 +67,20 @@ def extract_majority_endpoint(casrn):
         
         if num_pos >= num_neg:
             return 'positive'
+        elif num_pos == num_neg:
+            return np.nan
         else:
             return 'negative'
 
 
-geno_maj = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_maj['Genotoxicity'] = geno_maj.CasRN.map(lambda x: extract_majority_endpoint(x))
+# geno_maj = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
+result['maj'] = result.CasRN.map(lambda x: extract_majority_endpoint(x))
+result.maj.isna().sum()
+result.maj.notna().sum()
 
-geno_maj.Genotoxicity.value_counts()
-geno_maj.Genotoxicity.value_counts(normalize = True)
+result.maj.value_counts()
+result.maj.value_counts(normalize = True)
 
 
 #%%
-geno_consv.to_excel('../tg488_consv.xlsx', index = False, header = True)
-geno_maj.to_excel('../tg488_maj.xlsx', index = False, header = True)
+result.to_excel('../tg488.xlsx', index = False, header = True)

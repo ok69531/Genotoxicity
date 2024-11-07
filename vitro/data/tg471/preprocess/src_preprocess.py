@@ -30,10 +30,10 @@ result_ = []
 
 
 #%%
-for i in tqdm(range(len(jcheck_df))):
+for i in tqdm(range(len(sids_df))):
     try: 
-        soup = BeautifulSoup(jcheck_df.src[i], 'html.parser')
-        chem_dict = {'source': 'jcheck'}
+        soup = BeautifulSoup(sids_df.src[i], 'html.parser')
+        chem_dict = {'source': 'sids'}
         
         # chemical name
         # chem_name = soup.find('div', attrs = {'id': 'SubstanceName'}).find_next('h1').text
