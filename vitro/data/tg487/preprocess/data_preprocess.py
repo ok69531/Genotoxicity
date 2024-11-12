@@ -13,17 +13,21 @@ pd.set_option('mode.chained_assignment', None)
 df_tmp = pd.read_excel('tg487_raw.xlsx')
 df_tmp = df_tmp.dropna(subset = 'Genotoxicity').reset_index(drop = True)
 
+pn_map = pd.read_csv('tg487_pn_map.csv')
+pn_map = pn_map.set_index('raw').to_dict()['genotoxicity']
+
+
+#%%
 # pn_map = pd.DataFrame({'raw': df_tmp.Genotoxicity.unique()})
 # pn_map['genotoxicity'] = np.nan
 # pn_map['genotoxicity'][2] = 'positive'
 # pn_map.to_csv('tg487_pn_map.csv', header = True, index = False)
 
-# Genotoxicity  - negative/positive로 변환
-response = ['negative', 'positive']
-response_idx = [any(i in x for i in response) for x in df_tmp.Genotoxicity.unique()]
-response_value = df_tmp.Genotoxicity.unique()[response_idx]
 
-geno_tmp = df_tmp[df_tmp.Genotoxicity.isin(response_value)].reset_index(drop = True)
+#%%
+df_tmp.Genotoxicity = df_tmp.Genotoxicity.map(lambda x: pn_map[x])
+geno_tmp = df_tmp[df_tmp.Genotoxicity.notna()].reset_index(drop = True)
+
 geno_tmp.Genotoxicity.unique()
 geno_tmp.Genotoxicity.value_counts()
 
@@ -34,6 +38,7 @@ geno_tmp.CasRN.isna().sum()
 
 casrn_drop_idx = geno_tmp.CasRN != '-'
 geno = geno_tmp[casrn_drop_idx].reset_index(drop = True)
+result = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
 
 
 # multiiple results -> one result
@@ -48,14 +53,13 @@ def extract_conservative_endpoint(casrn):
         # count = geno_tmp.Genotoxicity[geno_tmp.CasRN == casrn].value_counts()
         return 'positive'
 
-geno_consv = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_consv['Genotoxicity'] = geno_consv.CasRN.map(lambda x: extract_conservative_endpoint(x))
+result['consv'] = result.CasRN.map(lambda x: extract_conservative_endpoint(x))
 
-geno_consv.Genotoxicity.value_counts()
-geno_consv.Genotoxicity.value_counts(normalize = True)
+result.consv.value_counts()
+result.consv.value_counts(normalize = True)
 
 
-# P개수 >= N개수면 P 
+# P개수 > N개수면 P 
 def extract_majority_endpoint(casrn):
     uniq_val = geno.Genotoxicity[geno.CasRN == casrn].unique()
     length = len(uniq_val)
@@ -71,17 +75,19 @@ def extract_majority_endpoint(casrn):
         
         if num_pos >= num_neg:
             return 'positive'
+        elif num_pos == num_neg:
+            return np.nan
         else:
             return 'negative'
 
 
-geno_maj = geno[['Chemical', 'CasRN']].drop_duplicates(['CasRN']).reset_index(drop = True)
-geno_maj['Genotoxicity'] = geno_maj.CasRN.map(lambda x: extract_majority_endpoint(x))
+result['maj'] = result.CasRN.map(lambda x: extract_majority_endpoint(x))
+result.maj.isna().sum()
+result.maj.notna().sum()
 
-geno_maj.Genotoxicity.value_counts()
-geno_maj.Genotoxicity.value_counts(normalize = True)
+result.maj.value_counts()
+result.maj.value_counts(normalize = True)
 
 
 #%%
-geno_consv.to_excel('../tg487_consv.xlsx', index = False, header = True)
-geno_maj.to_excel('../tg487_maj.xlsx', index = False, header = True)
+result.to_excel('../tg487_tmp.xlsx', index = False, header = True)

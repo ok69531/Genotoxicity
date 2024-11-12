@@ -4,45 +4,45 @@ positive,positive
 ambiguous,
 not specified,
 other: positive in strains TA 1537 and TA 98 in the absence of metabolic activation,positive
-"other: an increase was seen only in one strain, reaching 3-fold over background in one experiment and hence was considered of little biological relevance",
-other: weak to moderate mutagenic activity,
-other: postive at toxic concentrations without activation,
+"other: an increase was seen only in one strain, reaching 3-fold over background in one experiment and hence was considered of little biological relevance",negative
+other: weak to moderate mutagenic activity,positive
+other: postive at toxic concentrations without activation,positive
 not determined,
 other: positive but markedly reduced with respect to TA98,positive
 "other: positive, but markedly reduced compared to TA100",positive
 other: weak positive,positive
 "other: negative without S9 mix, questionable/ambiguous with S9 mix",negative
 "other: ambiguous in the first trial, negative in the second trial",negative
-other: Negative,
+other: Negative,negative
 other: result could not be used for judgement because of failure of positive control,
 other: not tested; only 4 strains.,
-other: marginally mutagenic; mutagenicity index (MI) - 1.0,
-other: marginally mutagenic; MI- 0.7,
-other: marginally mutagenic; MI-1.4,
-other: slightly mutagenic,
-other: marginally mutagenic; MI- 1.7,
+other: marginally mutagenic; mutagenicity index (MI) - 1.0,positive
+other: marginally mutagenic; MI- 0.7,positive
+other: marginally mutagenic; MI-1.4,positive
+other: slightly mutagenic,positive
+other: marginally mutagenic; MI- 1.7,positive
 other: This information not provided in the migrated SNIF dossier (SNIF # 001-3.0.10-01) provided by ECHA,
 other: preliminary toxicity assay,
 "other: not reliable, unacceptable for testing because the spontaneous reversion rates were twice the normal rate",
-"other: Negative in plate incorporation and preincubation assay, except in TA 98 with hamster S9 mix (preincub. assay),",
+"other: Negative in plate incorporation and preincubation assay, except in TA 98 with hamster S9 mix (preincub. assay),",negative
 other: weakly positive when reevaluated by SCF negative,positive
 "other: negative (a slight increase in TA 1536 and TA 98 in one test could not be confirmed in two additional tests, which clearly didn't show any increase in the number of revertant colonies)",negative
 other: see results in additional information,
-other: visible reduction in the growth of the bacterial lawn,
-other: small but statistically significant increase in the frequency of revertant colonies,
-other: statistically significant increase,
-other: clear dose-response relationship,
-other: small but not statistically increase in the frequency of revertant colonies,
+other: visible reduction in the growth of the bacterial lawn,positive
+other: small but statistically significant increase in the frequency of revertant colonies,positive
+other: statistically significant increase,positive
+other: clear dose-response relationship,positive
+other: small but not statistically increase in the frequency of revertant colonies,negative
 other:,
-other: In all 4 standard plate tests with S-9 mix a slight increase in the number of his+ revertants by a factor of 1.4-1.7 was observed at 100-200 µg/plate,
+other: In all 4 standard plate tests with S-9 mix a slight increase in the number of his+ revertants by a factor of 1.4-1.7 was observed at 100-200 µg/plate,positive
 other: without S9:ambiguous; with S9: negative,negative
 "other: negative at 20, 80, 320 and 1280 μg, positive at 5120 ug",positive
-other: Weakly,
-other: No,
-other: non statistically significant increases in the frequency of revertant colonies,
-other: No positive response observed,
+other: Weakly,positive
+other: No,negative
+other: non statistically significant increases in the frequency of revertant colonies,negative
+other: No positive response observed,negative
 other: weak positive effect at far in excess concentrations (>= 160 mg/plate),positive
-other: test article induced gene mutations by frameshifts in the genome of the strain TA 1537 and shows a possible mutagenic potential in the strain TA 98.,
+other: test article induced gene mutations by frameshifts in the genome of the strain TA 1537 and shows a possible mutagenic potential in the strain TA 98.,positive
 "other: Equivocal response in Salmonella strain TA100, both with and without microsomal activation, but was clearly negative in E. coli strain WP2uvrA and Salmonella strains TA98, TA1535 and TA1537.",negative
 other: weak mutagen only without S9; with S9 negative,negative
 other: see remarks on results including tables and figures and overall remarks,
@@ -50,9 +50,9 @@ other: positive only in Salmonella typhimurium TA 100,positive
 other: S typhimurium TA1537 and TA 98 gave positive results: TA1535 and TA 100 yielded negative results,positive
 other: not tested,
 other: Not tested. This strain was tested in another Bacterial Reverse Mutation Assay (see IUCLID section 7.6.1),
-other: extremely weak,
-other: slight increase in number of revertant colonies at 750 and 1000 µg/plate with S9 in the plate incorporation assay; not dose-dependent and not reproduced in the pre-incubation assay,
-other: Weakly mutagenic and some questionable results,
-other: slight increases in the number of his+ or trp+ revertants,
+other: extremely weak,positive
+other: slight increase in number of revertant colonies at 750 and 1000 µg/plate with S9 in the plate incorporation assay; not dose-dependent and not reproduced in the pre-incubation assay,positive
+other: Weakly mutagenic and some questionable results,positive
+other: slight increases in the number of his+ or trp+ revertants,positive
 other: weakly positive,positive
-other: 3-fold increase in comparison to the control at 2.05 µmol/plate,
+other: 3-fold increase in comparison to the control at 2.05 µmol/plate,positive

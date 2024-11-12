@@ -83,4 +83,4 @@ result.maj.value_counts(normalize = True)
 
 
 #%%
-result.to_excel('../tg483.xlsx', index = False, header = True)
+result.to_excel('../tg483_tmp.xlsx', index = False, header = True)
