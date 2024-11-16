@@ -1,6 +1,7 @@
 import os
 import json
 import warnings
+import logging
 
 import torch
 from torch.utils.data import random_split
@@ -21,7 +22,7 @@ from module import get_args, load_dataset, load_model
 from get_params_comb import load_hyperparameters
 
 warnings.filterwarnings('ignore')
-
+logging.basicConfig(format='', level=logging.INFO
 
 args = get_args()
 
@@ -37,7 +38,7 @@ def main():
     }
 
     for seed in range(10):
-        print(f'==================== Seed: {seed} ====================')
+        logging.info(f'==================== Seed: {} ===================='.format(seed))
         torch.manual_seed(seed)
         
         num_train = int(len(x) * args.train_frac)
@@ -94,13 +95,13 @@ def main():
     save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.model}.json')
     json.dump(best_result, open(save_path, 'w'))
     
-    print(f'param: {param}')
-    print(f'test f1: ${{{np.mean(test_f1s)*100:.3f}}}_{{\pm {np.std(test_f1s)*100:.3f}}}$')
-    print(f'test precision: ${{{np.mean(test_precs)*100:.3f}}}_{{\pm {np.std(test_precs)*100:.3f}}}$')
-    print(f'test recall: ${{{np.mean(test_recs)*100:.3f}}}_{{\pm {np.std(test_recs)*100:.3f}}}$')
-    print(f'test accuracy: ${{{np.mean(test_accs)*100:.3f}}}_{{\pm {np.std(test_accs)*100:.3f}}}$')
-    print(f'test roc-auc: ${{{np.mean(test_aucs)*100:.3f}}}_{{\pm {np.std(test_aucs)*100:.3f}}}$')
-        
+    logging.info(f'param: {}'.format(param))
+    logging.info('test f1: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_f1s) * 100, np.std(test_f1s) * 100))
+    logging.info('test precision: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_precs) * 100, np.std(test_precs) * 100))
+    logging.info('test recall: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_recs) * 100, np.std(test_recs) * 100))
+    logging.info('test accuracy: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_accs) * 100, np.std(test_accs) * 100))
+    logging.info('test roc-auc: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_aucs) * 100, np.std(test_aucs) * 100))
+            
 
 if __name__ == '__main__':
     main()
