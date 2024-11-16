@@ -38,7 +38,7 @@ def main():
     }
 
     for seed in range(10):
-        logging.info(f'==================== Seed: {} ===================='.format(seed))
+        logging.info('==================== Seed: {} ===================='.format(seed))
         torch.manual_seed(seed)
         
         num_train = int(len(x) * args.train_frac)
@@ -95,7 +95,7 @@ def main():
     save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.model}.json')
     json.dump(best_result, open(save_path, 'w'))
     
-    logging.info(f'param: {}'.format(param))
+    logging.info('param: {}'.format(param))
     logging.info('test f1: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_f1s) * 100, np.std(test_f1s) * 100))
     logging.info('test precision: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_precs) * 100, np.std(test_precs) * 100))
     logging.info('test recall: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_recs) * 100, np.std(test_recs) * 100))
