@@ -22,7 +22,7 @@ from module import get_args, load_dataset, load_model
 from get_params_comb import load_hyperparameters
 
 warnings.filterwarnings('ignore')
-logging.basicConfig(format='', level=logging.INFO
+logging.basicConfig(format='', level=logging.INFO)
 
 args = get_args()
 
