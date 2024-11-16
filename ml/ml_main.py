@@ -1,5 +1,6 @@
 import os
 import json
+import warnings
 
 import torch
 from torch.utils.data import random_split
@@ -19,9 +20,10 @@ from sklearn.metrics import (
 from module import get_args, load_dataset, load_model
 from get_params_comb import load_hyperparameters
 
+warnings.filterwarnings('ignore')
+
 
 args = get_args()
-
 
 def main():
     x, y = load_dataset(args.tg_num)
@@ -36,7 +38,6 @@ def main():
 
     for seed in range(10):
         print(f'==================== Seed: {seed} ====================')
-        
         torch.manual_seed(seed)
         
         num_train = int(len(x) * args.train_frac)
