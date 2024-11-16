@@ -1,6 +1,7 @@
 #%%
-import json
 import warnings
+
+import torch
 
 import numpy as np
 import pandas as pd
@@ -17,11 +18,6 @@ from lightgbm import LGBMClassifier
 
 from imblearn.over_sampling import SMOTE, SVMSMOTE
 
-from sklearn.model_selection import (
-    train_test_split,
-    StratifiedKFold, 
-    StratifiedShuffleSplit
-)
 from sklearn.metrics import (
     precision_score,
     recall_score,
@@ -33,9 +29,6 @@ from sklearn.metrics import (
 
 from itertools import product
 from collections.abc import Iterable
-
-from rdkit import Chem
-from rdkit.Chem import MACCSkeys
 
 warnings.filterwarnings('ignore')
 
@@ -83,159 +76,231 @@ def parameter_grid(param_dict):
     return params_grid
 
 
-def load_hyperparameter(model: str):
-    if model == 'logistic':
-        params_dict = {
-            'C': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
-                  1, 2, 3, 4, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 100],
-            'penalty': ['l1', 'l2'],
-            'solver': ['liblinear', 'saga']
-        }
+# def load_hyperparameter(model: str):
+#     if model == 'logistic':
+#         params_dict = {
+#             'C': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
+#                   1, 2, 3, 4, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 100],
+#             'penalty': ['l1', 'l2'],
+#             'solver': ['liblinear', 'saga']
+#         }
         
-    elif model == 'dt':
-        params_dict = {
-            'criterion': ['gini', 'entropy'],
-            'max_depth': [None, 1, 2, 3, 4, 5],
-            'min_samples_split': [2, 3, 4],
-            'min_samples_leaf': [1, 2, 3]
-        }
+#     elif model == 'dt':
+#         params_dict = {
+#             'criterion': ['gini', 'entropy'],
+#             'max_depth': [None, 1, 2, 3, 4, 5],
+#             'min_samples_split': [2, 3, 4],
+#             'min_samples_leaf': [1, 2, 3]
+#         }
     
-    elif model == 'rf':
-        params_dict = {
-            'n_estimators': [80, 90, 100, 110, 120, 130, 140, 150],
-            'criterion': ['gini'],
-            'min_samples_split': [2, 3, 4],
-            'min_samples_leaf': [1, 2, 3, 4],
-            'max_depth': [None, 2, 3, 4, 5],
-            'max_features': ['sqrt', 'log2']
-        }
+#     elif model == 'rf':
+#         params_dict = {
+#             'n_estimators': [80, 90, 100, 110, 120, 130, 140, 150],
+#             'criterion': ['gini'],
+#             'min_samples_split': [2, 3, 4],
+#             'min_samples_leaf': [1, 2, 3, 4],
+#             'max_depth': [None, 2, 3, 4, 5],
+#             'max_features': ['sqrt', 'log2']
+#         }
     
-    elif model == 'gbt':
-        params_dict = {
-            'learning_rate': [0.001, 0.005, 0.01, 0.05, 0.1],
-            'n_estimators': [5, 10, 50, 100, 130],
-            'max_depth': [1, 2, 3, 4]
-        }
+#     elif model == 'gbt':
+#         params_dict = {
+#             'learning_rate': [0.001, 0.005, 0.01, 0.05, 0.1],
+#             'n_estimators': [5, 10, 50, 100, 130],
+#             'max_depth': [1, 2, 3, 4]
+#         }
     
-    elif model == 'xgb':
-        params_dict = {
-        'min_child_weight': [1, 2, 3, 5],
-            'max_depth': [3, 6, 9],
-            'gamma': np.linspace(0, 3, 10),
-            # 'objective': ['multi:softmax'],
-            'booster': ['gbtree']
-        }
+#     elif model == 'xgb':
+#         params_dict = {
+#         'min_child_weight': [1, 2, 3, 5],
+#             'max_depth': [3, 6, 9],
+#             'gamma': np.linspace(0, 3, 10),
+#             # 'objective': ['multi:softmax'],
+#             'booster': ['gbtree']
+#         }
     
-    elif model == 'lgb':
-        params_dict = {
-            # 'objective': ['multiclass'],
-            'num_leaves': [15, 21, 27, 31, 33],
-            'max_depth': [-1, 2],
-            # 'n_estimators': [5, 10, 50, 100, 130],
-            'min_child_samples': [10, 20, 25, 30]
-        }
+#     elif model == 'lgb':
+#         params_dict = {
+#             # 'objective': ['multiclass'],
+#             'num_leaves': [15, 21, 27, 31, 33],
+#             'max_depth': [-1, 2],
+#             # 'n_estimators': [5, 10, 50, 100, 130],
+#             'min_child_samples': [10, 20, 25, 30]
+#         }
     
-    params = parameter_grid(params_dict)
+#     params = parameter_grid(params_dict)
     
-    return params
+#     return params
 
 
 #%%
-def binary_cross_validation(model, x, y, seed, smote = False):
-    skf = StratifiedKFold(n_splits = 5, shuffle = True, random_state = seed)
+# def binary_cross_validation(model, x, y, seed, smote = False):
+#     skf = StratifiedKFold(n_splits = 5, shuffle = True, random_state = seed)
     
-    metrics = ['precision', 'recall', 'f1', 'accuracy', 'auc']
+#     metrics = ['precision', 'recall', 'f1', 'accuracy', 'auc']
     
-    train_metrics = list(map(lambda x: 'train_' + x, metrics))
-    val_metrics = list(map(lambda x: 'val_' + x, metrics))
+#     train_metrics = list(map(lambda x: 'train_' + x, metrics))
+#     val_metrics = list(map(lambda x: 'val_' + x, metrics))
     
-    train_precision = []
-    train_recall = []
-    train_f1 = []
-    train_accuracy = []
-    train_auc = []
+#     train_precision = []
+#     train_recall = []
+#     train_f1 = []
+#     train_accuracy = []
+#     train_auc = []
     
-    val_precision = []
-    val_recall = []
-    val_f1 = []
-    val_accuracy = []
-    val_auc = []
+#     val_precision = []
+#     val_recall = []
+#     val_f1 = []
+#     val_accuracy = []
+#     val_auc = []
     
-    for train_idx, val_idx in skf.split(x, y):
-        train_x, train_y = x[train_idx], y[train_idx]
-        val_x, val_y = x[val_idx], y[val_idx]
+#     for train_idx, val_idx in skf.split(x, y):
+#         train_x, train_y = x[train_idx], y[train_idx]
+#         val_x, val_y = x[val_idx], y[val_idx]
         
-        if smote:
-            sm = SMOTE(random_state = seed)
-            train_x, train_y = sm.fit_resample(train_x, train_y)
-        else:
-            pass
+#         if smote:
+#             sm = SMOTE(random_state = seed)
+#             train_x, train_y = sm.fit_resample(train_x, train_y)
+#         else:
+#             pass
         
-        model.fit(train_x, train_y)
+#         model.fit(train_x, train_y)
         
-        train_pred = model.predict(train_x)
-        train_pred_score = model.predict_proba(train_x)[:, 1]
+#         train_pred = model.predict(train_x)
+#         train_pred_score = model.predict_proba(train_x)[:, 1]
         
-        val_pred = model.predict(val_x)
-        val_pred_score = model.predict_proba(val_x)[:, 1]
+#         val_pred = model.predict(val_x)
+#         val_pred_score = model.predict_proba(val_x)[:, 1]
         
-        train_precision.append(precision_score(train_y, train_pred))
-        train_recall.append(recall_score(train_y, train_pred))
-        train_f1.append(f1_score(train_y, train_pred))
-        train_accuracy.append(accuracy_score(train_y, train_pred))
-        train_auc.append(roc_auc_score(train_y, train_pred_score))
+#         train_precision.append(precision_score(train_y, train_pred))
+#         train_recall.append(recall_score(train_y, train_pred))
+#         train_f1.append(f1_score(train_y, train_pred))
+#         train_accuracy.append(accuracy_score(train_y, train_pred))
+#         train_auc.append(roc_auc_score(train_y, train_pred_score))
 
-        val_precision.append(precision_score(val_y, val_pred))
-        val_recall.append(recall_score(val_y, val_pred))
-        val_f1.append(f1_score(val_y, val_pred))
-        val_accuracy.append(accuracy_score(val_y, val_pred))
-        val_auc.append(roc_auc_score(val_y, val_pred_score))
+#         val_precision.append(precision_score(val_y, val_pred))
+#         val_recall.append(recall_score(val_y, val_pred))
+#         val_f1.append(f1_score(val_y, val_pred))
+#         val_accuracy.append(accuracy_score(val_y, val_pred))
+#         val_auc.append(roc_auc_score(val_y, val_pred_score))
 
-    result = dict(zip(train_metrics + val_metrics, 
-                      [np.mean(train_precision), np.mean(train_recall), np.mean(train_f1), np.mean(train_accuracy), np.mean(train_auc), 
-                       np.mean(val_precision), np.mean(val_recall), np.mean(val_f1), np.mean(val_accuracy), np.mean(val_auc)]))
+#     result = dict(zip(train_metrics + val_metrics, 
+#                       [np.mean(train_precision), np.mean(train_recall), np.mean(train_f1), np.mean(train_accuracy), np.mean(train_auc), 
+#                        np.mean(val_precision), np.mean(val_recall), np.mean(val_f1), np.mean(val_accuracy), np.mean(val_auc)]))
     
-    return(result)
+#     return(result)
 
 
-def metric_mean(data, metric: str):
-    mean_per_hp = list(map(lambda x: np.mean(x[1]), data[metric].items()))
-    return mean_per_hp
+# def metric_mean(data, metric: str):
+#     mean_per_hp = list(map(lambda x: np.mean(x[1]), data[metric].items()))
+#     return mean_per_hp
 
 
-def print_best_param(val_result, metric: str):
+# def print_best_param(val_result, metric: str):
     
-    mean_list = metric_mean(val_result, metric)
-    max_idx = mean_list.index(max(mean_list))
+#     mean_list = metric_mean(val_result, metric)
+#     max_idx = mean_list.index(max(mean_list))
     
-    best_param = val_result['model'][f'model{max_idx}']
+#     best_param = val_result['model'][f'model{max_idx}']
     
-    return best_param
+#     return best_param
 
 
 #%%
+# from torch.utils.data import random_split, DataLoader, Dataset
+
+# class Dataset(Dataset):
+#     def __init__(self, data):
+#         self.data = data
+        
+#     def __len__(self):
+#         return len(self.data)
+    
+#     def __getitem__(self, idx):
+#         return self.data[idx]
+
+
+
+#%%
+from torch.utils.data import random_split
+
 tg_num = 471
 path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
 
 df = pd.read_excel(path)
-mols = [Chem.MolFromSmiles(x) for x in df.SMILES]
-x = np.array([list(MACCSkeys.GenMACCSKeys(x))[1:] for x in mols])
-y = np.array([1 if x == 'positive' else 0 for x in df.Genotoxicity_maj])
+x = df.iloc[:, 5:].to_numpy()
+y = np.array([1 if x == 'positive' else 0 for x in df.maj])
 
 seed = 42
-# seed = 858
+torch.manual_seed(seed)
+ 
 num_valid = int(len(df) * 0.1)
 num_test = int(len(df) * 0.1)
 num_train = len(df) - (num_valid + num_test)
 assert num_train + num_valid + num_test == len(df)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = num_test, random_state = seed)
 
+indices = torch.arange(len(x))
+train_idx, val_idx, test_idx = random_split(indices, [num_train, num_valid, num_test])
+
+train_x = x[np.array(train_idx)]; train_y = y[np.array(train_idx)]
+val_x = x[np.array(val_idx)]; val_y = y[np.array(val_idx)]
+test_x = x[np.array(test_idx)]; test_y = y[np.array(test_idx)]
+
+print(np.unique(train_y, return_counts = True)[1]/len(train_x))
+print(np.unique(val_y, return_counts = True)[1]/len(val_x))
+print(np.unique(test_y, return_counts = True)[1]/len(test_x))
+
+
+params_dict = {
+            'n_estimators': [10, 15, 30, 50, 70, 90, 100, 110, 130, 150],
+            'min_samples_split': [2, 3, 4, 5],
+            'min_samples_leaf': [1, 2],
+            'max_depth': [None, 25, 30, 35, 40, 45, 50]
+        }
+params = parameter_grid(params_dict)
+len(params)
 
 #%%
+'''여기부터'''
+from sklearn.metrics import f1_score
+
+
+# n_est_list = [10, 15, 30, 50, 70, 90, 100, 110, 130, 150]
+# min_sample_split_list = [2, 3, 4, 5]
+# min_sample_leaf_list = [1, 2]
+# max_depth_list = [None, 10, 20, 25, 30, 35, 40, 45, 50]
+
+
+val_f1s = []
+for n in tqdm(max_depth_list):
+    model = RandomForestClassifier(random_state=0, max_depth=n)
+    model.fit(train_x, train_y)
+
+    val_pred = model.predict(val_x)
+    val_f1s.append(f1_score(val_y, val_pred))
+
+
+idx = val_f1s.index(max(val_f1s))
+n = max_depth_list[idx]
+model = RandomForestClassifier(random_state=0, max_depth=n)
+model.fit(train_x, train_y)
+
+val_pred = model.predict(val_x)
+val_perd_prob = model.predict_proba(val_x)[:, 1]
+
+test_pred = model.predict(test_x)
+test_perd_prob = model.predict_proba(test_x)[:, 1]
+
+print(classification_report(train_y, model.predict(train_x)))
+print(classification_report(val_y, val_pred))
+print(classification_report(test_y, test_pred))
+
+ 
+#%%
 model_type = 'rf' # logistic, dt, rf, gbt, lgb, xgb, 
-num_run = 3
+num_run = 1
 metric = 'f1'
-smote = True
+smote = False
 
 print('=================================')
 print(f'tg{tg_num} majority {model_type} smote {smote}')
