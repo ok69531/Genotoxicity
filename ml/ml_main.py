@@ -35,6 +35,8 @@ def main():
     }
 
     for seed in range(10):
+        print(f'==================== Seed: {seed} ====================')
+        
         torch.manual_seed(seed)
         
         num_train = int(len(x) * args.train_frac)
@@ -70,33 +72,33 @@ def main():
             results_dict[i]['test']['recall'].append(recall_score(y_test, test_pred))
             results_dict[i]['test']['acc'].append(accuracy_score(y_test, test_pred))
             results_dict[i]['test']['auc'].append(roc_auc_score(y_test, test_pred_prob))
-            
-        val_f1s = [np.mean(results_dict[i]['valid']['f1']) for i in range(len(params))]
-        max_idx = val_f1s.index(max(val_f1s))
+    
+    val_f1s = [np.mean(results_dict[i]['valid']['f1']) for i in range(len(params))]
+    max_idx = val_f1s.index(max(val_f1s))
+    
+    best_result = results_dict[max_idx] 
+    param = best_result['param']
+    test_f1s = best_result['test']['f1']
+    test_precs = best_result['test']['precision']
+    test_recs = best_result['test']['recall']
+    test_accs = best_result['test']['acc']
+    test_aucs = best_result['test']['auc']
+    
+    save_path = 'saved_result'
+    if os.path.isdir(save_path):
+        pass
+    else:
+        os.makedirs(save_path)
         
-        best_result = results_dict[max_idx] 
-        param = best_result['param']
-        test_f1s = best_result['test']['f1']
-        test_precs = best_result['test']['precision']
-        test_recs = best_result['test']['recall']
-        test_accs = best_result['test']['acc']
-        test_aucs = best_result['test']['auc']
-        
-        save_path = 'saved_result'
-        if os.path.isdir(save_path):
-            pass
-        else:
-            os.makedirs(save_path)
-            
-        save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.model}.json')
-        json.dump(best_result, open(save_path, 'w'))
-        
-        print(f'param: {param}')
-        print(f'test f1: ${{{np.mean(test_f1s)*100:.3f}}}_{{\pm {np.std(test_f1s)*100:.3f}}}$')
-        print(f'test precision: ${{{np.mean(test_precs)*100:.3f}}}_{{\pm {np.std(test_precs)*100:.3f}}}$')
-        print(f'test recall: ${{{np.mean(test_recs)*100:.3f}}}_{{\pm {np.std(test_recs)*100:.3f}}}$')
-        print(f'test accuracy: ${{{np.mean(test_accs)*100:.3f}}}_{{\pm {np.std(test_accs)*100:.3f}}}$')
-        print(f'test roc-auc: ${{{np.mean(test_aucs)*100:.3f}}}_{{\pm {np.std(test_aucs)*100:.3f}}}$')
+    save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.model}.json')
+    json.dump(best_result, open(save_path, 'w'))
+    
+    print(f'param: {param}')
+    print(f'test f1: ${{{np.mean(test_f1s)*100:.3f}}}_{{\pm {np.std(test_f1s)*100:.3f}}}$')
+    print(f'test precision: ${{{np.mean(test_precs)*100:.3f}}}_{{\pm {np.std(test_precs)*100:.3f}}}$')
+    print(f'test recall: ${{{np.mean(test_recs)*100:.3f}}}_{{\pm {np.std(test_recs)*100:.3f}}}$')
+    print(f'test accuracy: ${{{np.mean(test_accs)*100:.3f}}}_{{\pm {np.std(test_accs)*100:.3f}}}$')
+    print(f'test roc-auc: ${{{np.mean(test_aucs)*100:.3f}}}_{{\pm {np.std(test_aucs)*100:.3f}}}$')
         
 
 if __name__ == '__main__':
