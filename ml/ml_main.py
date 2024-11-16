@@ -16,8 +16,8 @@ from sklearn.metrics import (
     classification_report
 )
 
-from .module import get_args, load_dataset, load_model
-from .get_params_comb import load_hyperparameters
+from module import get_args, load_dataset, load_model
+from get_params_comb import load_hyperparameters
 
 
 args = get_args()
