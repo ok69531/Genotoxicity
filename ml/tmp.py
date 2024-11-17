@@ -2,6 +2,7 @@
 import os
 import json
 import argparse
+from random import Random
 import warnings
 
 import torch
@@ -29,75 +30,13 @@ from sklearn.metrics import (
     classification_report
 )
 
-from get_params_comb import load_hyperparameters
+from get_params_comb import load_hyperparameters, parameter_grid
 
 warnings.filterwarnings('ignore')
 
 
 #%%
-
-
-def load_hyperparameter(model: str):
-    if model == 'logistic':
-        params_dict = {
-            'C': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 
-                  1, 2, 3, 4, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 100],
-            'penalty': ['l1', 'l2'],
-            'solver': ['liblinear', 'saga']
-        }
-        
-    elif model == 'dt':
-        params_dict = {
-            'criterion': ['gini', 'entropy'],
-            'max_depth': [None, 1, 2, 3, 4, 5],
-            'min_samples_split': [2, 3, 4],
-            'min_samples_leaf': [1, 2, 3]
-        }
-    
-    elif model == 'rf':
-        params_dict = {
-            'n_estimators': [80, 90, 100, 110, 120, 130, 140, 150],
-            'criterion': ['gini'],
-            'min_samples_split': [2, 3, 4],
-            'min_samples_leaf': [1, 2, 3, 4],
-            'max_depth': [None, 2, 3, 4, 5],
-            'max_features': ['sqrt', 'log2']
-        }
-    
-    elif model == 'gbt':
-        params_dict = {
-            'learning_rate': [0.001, 0.005, 0.01, 0.05, 0.1],
-            'n_estimators': [5, 10, 50, 100, 130],
-            'max_depth': [1, 2, 3, 4]
-        }
-    
-    elif model == 'xgb':
-        params_dict = {
-        'min_child_weight': [1, 2, 3, 5],
-            'max_depth': [3, 6, 9],
-            'gamma': np.linspace(0, 3, 10),
-            # 'objective': ['multi:softmax'],
-            'booster': ['gbtree']
-        }
-    
-    elif model == 'lgb':
-        params_dict = {
-            # 'objective': ['multiclass'],
-            'num_leaves': [15, 21, 27, 31, 33],
-            'max_depth': [-1, 2],
-            # 'n_estimators': [5, 10, 50, 100, 130],
-            'min_child_samples': [10, 20, 25, 30]
-        }
-    
-    params = parameter_grid(params_dict)
-    
-    return params
-
-
-
-#%%
-
-tg_num = 471
+tg_num = 476
 path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
 
 df = pd.read_excel(path)
@@ -126,23 +65,25 @@ print(np.unique(test_y, return_counts = True)[1]/len(test_x))
 
 #%%
 '''여기부터'''
-# n_est_list = np.arange(5, 150, 5)
-# min_sample_split_list = [2, 3, 4, 5, 10, 15, 20]
-# min_sample_leaf_list = [1, 2, 5]
-max_depth_list = [-1, 3, 4, 5, 6, 7, 8, 9, 15, 30]
+# n_est_list = np.concatenate([np.array([2, 3, 4]), np.arange(5, 155, 5)])
+# min_sample_split_list = [2, 3, 4, 5, 7, 9, 10, 13, 15, 17, 20]
+# min_sample_leaf_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+max_depth_list = [None, 1, 2, 3, 4, 5, 7, 10, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+# max_depth_list = [-1, 3, 4, 5, 6, 7, 8, 9, 15, 30]
 # lr_list = [0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1]
 # gamma_list = [0, 0.001, 0.003, 0.005, 0.007, 0.01, 0.03, 0.05, 0.07, 0.1, 0.3, 0.5, 0.7, 1]
 # min_child_weight_list = [1, 2, 3, 4, 5, 7, 9, 10, 15, 20]
-# num_leaves_list = np.arange(15, 100, 2)
+# num_leaves_list = np.arange(3, 100, 2)
 
 
 val_f1s = []
 for n in tqdm(max_depth_list):
-    model = LGBMClassifier(random_state=0, max_depth=n)
+    # model = LGBMClassifier(random_state=0, n_estimators=n)
     # model = XGBClassifier(random_state=0, min_child_weight=n)
-    # model = GradientBoostingClassifier(random_state=0, min_samples_split=n)
-    # model = DecisionTreeClassifier(random_state=0, min_samples_split=n)
-    # model = RandomForestClassifier(random_state=0, max_depth=n)
+    model = GradientBoostingClassifier(random_state=0, max_depth=n)
+    # model = DecisionTreeClassifier(random_state=0, min_samples_leaf=n)
+    # model = RandomForestClassifier(random_state=0, max_depth=n, n_estimators=5)
+
     model.fit(train_x, train_y)
 
     val_pred = model.predict(val_x)
@@ -151,7 +92,7 @@ for n in tqdm(max_depth_list):
 
 idx = val_f1s.index(max(val_f1s))
 n = max_depth_list[idx]
-model = LGBMClassifier(random_state=0, num_leaves=n)
+model = DecisionTreeClassifier(random_state=0, min_samples_leaf=n)
 model.fit(train_x, train_y)
 
 val_pred = model.predict(val_x)
@@ -165,14 +106,53 @@ print(classification_report(val_y, val_pred))
 print(classification_report(test_y, test_pred))
 
 
-params_dict = {
-    'num_leaves': [15, 21, 31, 33, 39, 50, 70, 99],
-    'max_depth': [-1, 3, 5, 8],
-    'n_estimators': [100, 110],
-    'min_child_samples': [10, 20, 25, 30]
-}
-params = parameter_grid(params_dict)
-len(params)
+#%%
+def get_487_params(model: str):
+    if model == 'dt':
+        params_dict = {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [None, 10, 20, 25, 30, 35, 40, 45, 50, 55],
+            'min_samples_split': [2, 3, 4, 5, 7, 10],
+            'min_samples_leaf': [1, 2, 3, 4, 5, 7, 9]
+        }
+
+    elif model == 'rf':
+        params_dict = {
+            'n_estimators': [2, 3, 5, 7, 10, 15, 20, 30, 50, 70, 100, 110],
+            'min_samples_split': [2, 3, 4, 5],
+            'min_samples_leaf': [1, 2],
+            'max_depth': [None, 25, 30, 35, 40, 45, 50]
+        }
+    
+    elif model == 'gbt':
+        params_dict = {
+            'learning_rate': [0.03, 0.05, 0.1],
+            'n_estimators': [5, 10, 20, 30, 50, 70, 100],
+            'max_depth': [None, 10, 20, 25, 30],
+            'min_samples_split': [2, 3],
+            'min_samples_leaf': [1, 3, 5, 7, 8],
+            }
+    
+    elif model == 'xgb':
+        params_dict = {
+            'n_estimators': [5, 10, 20, 30, 50, 100, 110, 120],
+            'learning_rate': [0.05, 0.1],
+            'min_child_weight': [1, 3],
+            'max_depth': [3, 6, 9],
+            'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
+        }
+        
+    elif model == 'lgb':
+        params_dict = {
+            'num_leaves': [11, 13, 21, 25, 31, 33, 43, 50, 70, 99],
+            'max_depth': [-1, 5, 8, 15, 30],
+            'n_estimators': [100, 110, 120],
+            'min_child_samples': [10, 20, 25, 30]
+        }
+    
+    return params_dict
+
+len(parameter_grid(params_dict))
 
 
 #%%
