@@ -72,7 +72,8 @@ def get_471_params(model: str):
             'min_child_weight': [1, 3],
             'max_depth': [3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
-            'scale_pos_weight': [1, 3, 5, 10]
+            'scale_pos_weight': [1, 3, 5, 10],
+            'class_weight': [None]
         }
         
     elif model == 'lgb':
@@ -122,7 +123,8 @@ def get_473_params(model: str):
             'min_child_weight': [1, 3],
             'max_depth': [3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
-            'scale_pos_weight': [1, 3, 5, 10]
+            'scale_pos_weight': [1, 3, 5, 10],
+            'class_weight': [None]
         }
         
     elif model == 'lgb':
@@ -172,7 +174,8 @@ def get_476_params(model: str):
             'min_child_weight': [1, 3],
             'max_depth': [3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
-            'scale_pos_weight': [1, 3, 5, 10]
+            'scale_pos_weight': [1, 3, 5, 10],
+            'class_weight': [None]
         }
         
     elif model == 'lgb':
@@ -223,7 +226,8 @@ def get_487_params(model: str):
             'min_child_weight': [1, 3],
             'max_depth': [3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
-            'scale_pos_weight': [1, 3, 5, 10]
+            'scale_pos_weight': [1, 3, 5, 10],
+            'class_weight': [None]
         }
         
     elif model == 'lgb':

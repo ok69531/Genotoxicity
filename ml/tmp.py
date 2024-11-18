@@ -76,7 +76,16 @@ compute_sample_weight(class_weight='balanced', y=train_y)
 
 param
 p = {k: v for k, v in param.items() if k != 'class_weight'}
-GradientBoostingClassifier()
+model = GradientBoostingClassifier(random_state=0, **p)
+
+
+sample_weight = compute_sample_weight(class_weight='balanced', y=train_y)
+sample_weight = np.array([None for i in range(len(train_y))])
+model.fit(train_x, train_y, sample_weight = sample_weight)
+model.fit(train_x, train_y)
+
+model = XGBClassifier(random_state = 0, scale_pos_weight = 1)
+model.fit(train_x, train_y)
 
 
 #%%
