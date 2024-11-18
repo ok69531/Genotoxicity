@@ -26,8 +26,12 @@ def get_args():
 
 
 def load_dataset(tg: int):
-    path = f'../vitro/data/tg{tg}/tg{tg}.xlsx'
+    if (tg == 471) or (tg == 473) or (tg == 476) or (tg == 487):
+        path = f'../vitro/data/tg{tg}/tg{tg}.xlsx'
+    else: 
+        path = f'../vivo/data/tg{tg}/tg{tg}.xlsx'
     df = pd.read_excel(path)
+    df = df[df.maj.notna()].reset_index(drop = True)
     
     x = df.iloc[:, 5:].to_numpy()
     y = np.array([1 if x == 'positive' else 0 for x in df.maj])

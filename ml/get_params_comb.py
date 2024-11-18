@@ -31,6 +31,12 @@ def load_hyperparameters(model: str, tg: int):
         params_dict = get_476_params(model)
     elif tg == 487:
         params_dict = get_487_params(model)
+    elif tg == 474:
+        params_dict = get_474_params(model)
+    elif tg == 475:
+        params_dict = get_475_params(model)
+    elif tg == 478:
+        params_dict = get_478_params(model)
     
     params = parameter_grid(params_dict)
     
@@ -70,7 +76,7 @@ def get_471_params(model: str):
             'n_estimators': [10, 20, 30, 50, 100],
             'learning_rate': [0.05, 0.1],
             'min_child_weight': [1, 3],
-            'max_depth': [3, 6, 9],
+            'max_depth': [None, 3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
             'scale_pos_weight': [1, 3, 5, 10],
             'class_weight': [None]
@@ -121,7 +127,7 @@ def get_473_params(model: str):
             'n_estimators': [5, 10, 20, 30, 50, 100],
             'learning_rate': [0.05, 0.1],
             'min_child_weight': [1, 3],
-            'max_depth': [3, 6, 9],
+            'max_depth': [None, 3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
             'scale_pos_weight': [1, 3, 5, 10],
             'class_weight': [None]
@@ -172,7 +178,7 @@ def get_476_params(model: str):
             'n_estimators': [5, 10, 20, 30, 50, 100, 110, 120],
             'learning_rate': [0.05, 0.1],
             'min_child_weight': [1, 3],
-            'max_depth': [3, 6, 9],
+            'max_depth': [None, 3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
             'scale_pos_weight': [1, 3, 5, 10],
             'class_weight': [None]
@@ -224,7 +230,7 @@ def get_487_params(model: str):
             'n_estimators': [5, 10, 20, 30, 50, 100, 110, 120],
             'learning_rate': [0.05, 0.1],
             'min_child_weight': [1, 3],
-            'max_depth': [3, 6, 9],
+            'max_depth': [None, 3, 6, 9],
             'gamma': [0, 0.001, 0.005, 0.01, 0.1, 1],
             'scale_pos_weight': [1, 3, 5, 10],
             'class_weight': [None]
@@ -236,6 +242,159 @@ def get_487_params(model: str):
             'max_depth': [-1, 5, 8, 15, 30],
             'n_estimators': [100, 110, 120],
             'min_child_samples': [10, 20, 25, 30],
+            'class_weight': [None, 'balanced']
+        }
+    
+    return params_dict
+
+
+def get_474_params(model: str):
+    if model == 'dt':
+        params_dict = {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [None, 10, 20, 25, 30, 35, 40, 45, 50, 55],
+            'min_samples_split': [2, 3, 4, 5, 7, 9, 10, 13],
+            'min_samples_leaf': [1, 3, 5, 8],
+            'class_weight': [None, 'balanced']
+        }
+
+    elif model == 'rf':
+        params_dict = {
+            'n_estimators': [3, 5, 10, 15, 30, 50, 70, 90, 100],
+            'min_samples_split': [2, 3, 4, 5],
+            'min_samples_leaf': [1, 2, 3],
+            'max_depth': [None, 10, 25, 30, 35, 40, 50, 60],
+            'class_weight': [None, 'balanced']
+        }
+    
+    elif model == 'gbt':
+        params_dict = {
+            'learning_rate': [0.01, 0.03, 0.05, 0.1, 0.3],
+            'n_estimators': [10, 30, 50, 70, 90, 100, 130],
+            'max_depth': [None, 3, 4, 7],
+            'min_samples_split': [2, 3, 7, 10],
+            'class_weight': [None, 'balanced']
+            }
+    
+    elif model == 'xgb':
+        params_dict = {
+            'n_estimators': [10, 30, 35, 50, 100],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'min_child_weight': [1, 3],
+            'max_depth': [None, 3, 6, 9],
+            'gamma': [0, 0.001, 0.005, 0.01, 0.1],
+            'scale_pos_weight': [1, 3, 5, 7, 9, 10, 15],
+            'class_weight': [None]
+        }
+        
+    elif model == 'lgb':
+        params_dict = {
+            'num_leaves': [3, 5, 10, 15, 25, 33, 50, 70],
+            'max_depth': [-1, 3, 5, 9, 15, 30],
+            'n_estimators': [5, 35, 50, 70, 100, 150],
+            'min_child_samples': [10, 20, 30, 35],
+            'class_weight': [None, 'balanced']
+        }
+    
+    return params_dict
+
+
+def get_475_params(model: str):
+    if model == 'dt':
+        params_dict = {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [None, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+            'min_samples_split': [2, 4, 5, 7, 9, 10, 13, 15, 20],
+            'min_samples_leaf': [1, 3, 5, 7],
+            'class_weight': [None, 'balanced']
+        }
+
+    elif model == 'rf':
+        params_dict = {
+            'n_estimators': [3, 5, 10, 15, 30, 50, 70, 90, 100],
+            'min_samples_split': [2, 3, 4, 5],
+            'min_samples_leaf': [1, 2, 3],
+            'max_depth': [None, 10, 20, 30, 35, 40, 50],
+            'class_weight': [None, 'balanced']
+        }
+    
+    elif model == 'gbt':
+        params_dict = {
+            'learning_rate': [0.01, 0.03, 0.05, 0.1, 0.3],
+            'n_estimators': [50, 70, 90, 100, 110, 130],
+            'max_depth': [None, 2, 4, 6],
+            'min_samples_split': [2, 3, 4, 5],
+            'class_weight': [None, 'balanced']
+            }
+    
+    elif model == 'xgb':
+        params_dict = {
+            'n_estimators': [10, 30, 35, 50, 100],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'min_child_weight': [1, 3],
+            'max_depth': [None, 3, 6, 9],
+            'gamma': [0, 0.001, 0.005, 0.01, 0.1],
+            'scale_pos_weight': [1, 2, 3, 5, 7, 10],
+            'class_weight': [None]
+        }
+        
+    elif model == 'lgb':
+        params_dict = {
+            'num_leaves': [3, 5, 10, 15, 25, 33, 50, 70],
+            'max_depth': [-1, 3, 5, 9, 15, 30],
+            'n_estimators': [30, 50, 70, 100, 150],
+            'min_child_samples': [5, 10, 20, 30, 35],
+            'class_weight': [None, 'balanced']
+        }
+    
+    return params_dict
+
+
+def get_478_params(model: str):
+    if model == 'dt':
+        params_dict = {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [None, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+            'min_samples_split': [2, 4, 5, 7, 9, 10, 13, 15, 20],
+            'min_samples_leaf': [1, 3, 5, 7],
+            'class_weight': [None, 'balanced']
+        }
+
+    elif model == 'rf':
+        params_dict = {
+            'n_estimators': [5, 10, 15, 30, 50, 70, 90, 100],
+            'min_samples_split': [3, 5, 7, 10],
+            'min_samples_leaf': [1, 2, 3],
+            'max_depth': [None, 1, 3, 5, 7, 10, 20, 30],
+            'class_weight': [None, 'balanced']
+        }
+    
+    elif model == 'gbt':
+        params_dict = {
+            'learning_rate': [0.03, 0.05, 0.1, 0.3],
+            'n_estimators': [30, 50, 70, 90, 100, 110],
+            'max_depth': [None, 2, 7, 10],
+            'min_samples_split': [2, 5, 9, 13],
+            'class_weight': [None, 'balanced']
+            }
+    
+    elif model == 'xgb':
+        params_dict = {
+            'n_estimators': [10, 25, 35, 50, 100],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'min_child_weight': [1, 3],
+            'max_depth': [None, 3, 6, 9],
+            'gamma': [0, 0.001, 0.005, 0.01, 0.1],
+            'scale_pos_weight': [1, 2, 3, 5, 7, 10],
+            'class_weight': [None]
+        }
+        
+    elif model == 'lgb':
+        params_dict = {
+            'num_leaves': [3, 5, 10, 15, 25, 33, 50, 70],
+            'max_depth': [-1, 3, 5, 9, 15, 30],
+            'n_estimators': [30, 50, 70, 100, 150],
+            'min_child_samples': [5, 10, 20, 30, 35],
             'class_weight': [None, 'balanced']
         }
     
