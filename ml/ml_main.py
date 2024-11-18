@@ -57,7 +57,7 @@ def main():
         for i, p in tqdm(enumerate(params)):
             if (args.model == 'gbt') & (p['class_weight'] is not None):
                 model = load_model(args.model, seed, p)
-                sample_weights = compute_sample_weight(p['class_weight'], train_y)
+                sample_weights = compute_sample_weight(p['class_weight'], y_train)
                 model.fit(x_train, y_train, sample_weight=sample_weights)
             
             else:
