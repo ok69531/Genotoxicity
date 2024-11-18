@@ -60,7 +60,7 @@ def main():
                 sample_weights = compute_sample_weight(p['class_weight'], train_y)
                 model.fit(x_train, y_train, sample_weight=sample_weights)
             
-            else
+            else:
                 model = load_model(args.model, seed, p)
                 model.fit(x_train, y_train)
                 
