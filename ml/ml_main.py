@@ -17,6 +17,7 @@ from sklearn.metrics import (
     f1_score,
     classification_report
 )
+from sklearn.utils.class_weight import compute_sample_weight
 
 from module import get_args, load_dataset, load_model
 from get_params_comb import load_hyperparameters
@@ -54,8 +55,15 @@ def main():
         x_test = x[np.array(test_idx)]; y_test = y[np.array(test_idx)]
         
         for i, p in tqdm(enumerate(params)):
-            model = load_model(args.model, seed, p)
-            model.fit(x_train, y_train)
+            if (args.model == 'gbt') & (p['class_weight'] is not None):
+                model = load_model(args.model, seed, p)
+                sample_weights = compute_sample_weight(p['class_weight'], train_y)
+                model.fit(x_train, y_train, sample_weight=sample_weights)
+            
+            else
+                model = load_model(args.model, seed, p)
+                model.fit(x_train, y_train)
+                
             
             valid_pred = model.predict(x_val)
             valid_pred_prob = model.predict_proba(x_val)[:, 1]

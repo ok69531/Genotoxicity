@@ -43,7 +43,7 @@ def load_model(model: str, seed: int, param: dict):
         clf = RandomForestClassifier(random_state = seed, **param)
     
     elif model == 'gbt':
-        clf = GradientBoostingClassifier(random_state = seed, **param)
+        clf = GradientBoostingClassifier(random_state = seed, **{k: v for k, v in p.items() if k != 'class_weight'})
     
     elif model == 'xgb':
         clf = XGBClassifier(random_state = seed, **param)
