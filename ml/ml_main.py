@@ -19,6 +19,8 @@ from sklearn.metrics import (
 )
 from sklearn.utils.class_weight import compute_sample_weight
 
+from imblearn.over_sampling import SMOTE
+
 from module import get_args, load_dataset, load_model
 from get_params_comb import load_hyperparameters
 
@@ -53,6 +55,10 @@ def main():
         x_train = x[np.array(train_idx)]; y_train = y[np.array(train_idx)]
         x_val = x[np.array(val_idx)]; y_val = y[np.array(val_idx)]
         x_test = x[np.array(test_idx)]; y_test = y[np.array(test_idx)]
+        
+        if args.use_smote:
+            smote = SMOTE(random_state = args.smote_seed)
+            x_train, y_train = smote.fit_resample(x_train, y_train)
         
         for i, p in tqdm(enumerate(params)):
             if (args.model == 'gbt') & (p['class_weight'] is not None):
@@ -99,8 +105,11 @@ def main():
         pass
     else:
         os.makedirs(save_path)
-        
-    save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.model}.json')
+    
+    if args.use_smote:
+        save_path = os.path.join(save_path, f'tg{args.tg_num}_toxprint_smote_{args.model}.json')
+    else:
+        save_path = os.path.join(save_path, f'tg{args.tg_num}_toxprint_{args.model}.json')
     json.dump(best_result, open(save_path, 'w'))
     
     logging.info('')

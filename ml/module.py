@@ -16,8 +16,10 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
     parser.add_argument('--model', type = str, default = 'dt', help = 'dt, rf, gbt, xgb, lgb')
-    parser.add_argument('--train_frac', type = float, default = 0.8, help = 'fraction of train dataset')
+    parser.add_argument('--train_frac', type = float, default = 0.7, help = 'fraction of train dataset')
     parser.add_argument('--val_frac', type = float, default = 0.1, help = 'fraction of validation and test dataset')
+    parser.add_argument('--use_smote', type = bool, default = False, help = 'whether using SMOTE')
+    parser.add_argument('--smote_seed', type = int, default = 42)
     
     try: args = parser.parse_args()
     except: args = parser.parse_args([])
