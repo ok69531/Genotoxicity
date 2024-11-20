@@ -30,7 +30,7 @@ logging.basicConfig(format='', level=logging.INFO)
 args = get_args()
 
 def main():
-    x, y = load_dataset(args.tg_num)
+    x, y = load_dataset(args.tg_num, args.fp_type)
 
     params = load_hyperparameters(args.model, args.tg_num)
     results_dict = {
