@@ -120,9 +120,15 @@ def main():
         os.makedirs(save_path)
     
     if args.use_smote:
-        save_path = os.path.join(save_path, f'tg{args.tg_num}_toxprint_smote_{args.model}.json')
+        if args.use_md:
+            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_md_smote_{args.model}.json')
+        else:
+            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_smote_{args.model}.json')
     else:
-        save_path = os.path.join(save_path, f'tg{args.tg_num}_toxprint_{args.model}.json')
+        if args.use_md:
+            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_md_{args.model}.json')
+        else:
+            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_{args.model}.json')
     json.dump(best_result, open(save_path, 'w'))
     
     logging.info('')
