@@ -1,3 +1,4 @@
+import json
 import argparse
 
 import pandas as pd
@@ -5,6 +6,7 @@ import numpy as np
 
 from rdkit import Chem
 from rdkit.Chem import MACCSkeys
+from rdkit.ML.Descriptors import MoleculeDescriptors
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import (
@@ -24,6 +26,7 @@ def get_args():
     parser.add_argument('--val_frac', type = float, default = 0.1, help = 'fraction of validation and test dataset')
     parser.add_argument('--use_smote', type = bool, default = False, help = 'whether using SMOTE')
     parser.add_argument('--smote_seed', type = int, default = 42)
+    parser.add_argument('--use_md', type = bool, default = False, help = 'whetehr using molecular descriptors')
     
     try: args = parser.parse_args()
     except: args = parser.parse_args([])
@@ -31,7 +34,7 @@ def get_args():
     return args
 
 
-def load_dataset(tg: int, fp_type: str):
+def load_dataset(tg: int, fp_type: str, use_md: bool):
     if (tg == 471) or (tg == 473) or (tg == 476) or (tg == 487):
         path = f'../vitro/data/tg{tg}/tg{tg}.xlsx'
     else: 
@@ -39,11 +42,14 @@ def load_dataset(tg: int, fp_type: str):
     df = pd.read_excel(path)
     df = df[df.maj.notna()].reset_index(drop = True)
     
-    # x = df.iloc[:, 5:].to_numpy()
     x = get_fingerprint(df, fp_type)
+    fp_length = x.shape[1]
+    if use_md:
+        descriptors = get_descriptors(df)
+        x = np.concatenate([x, descriptors], axis = 1)
     y = np.array([1 if x == 'positive' else 0 for x in df.maj])
     
-    return x, y
+    return x, y, fp_length
 
 
 def get_fingerprint(df, fp_type: str):
@@ -56,10 +62,21 @@ def get_fingerprint(df, fp_type: str):
     elif fp_type == 'maccs':
         mols = [Chem.MolFromSmiles(x) for x in df.SMILES]
         maccs = [MACCSkeys.GenMACCSKeys(x) for x in mols]
-        maccs_bits = [x.ToBitString() for x in maccs]
         x = np.array([list(map(int, x.ToBitString())) for x in maccs])
 
     return x
+
+
+def get_descriptors(df):
+    with open('descriptor_name.json', 'r') as f:
+        descriptor_names = json.load(f)
+    
+    mols = [Chem.MolFromSmiles(x) for x in df.SMILES]
+    
+    calc = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
+    descriptors = np.array([list(map(float, calc.CalcDescriptors(m))) for m in mols])
+    
+    return descriptors
 
 
 def load_model(model: str, seed: int, param: dict):

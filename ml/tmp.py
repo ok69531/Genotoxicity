@@ -32,7 +32,8 @@ from sklearn.metrics import (
 
 import rdkit
 from rdkit import Chem
-from rdkit.Chem import MACCSkeys
+from rdkit.Chem import MACCSkeys, Descriptors
+from rdkit.ML.Descriptors import MoleculeDescriptors
 
 from get_params_comb import load_hyperparameters, parameter_grid
 
@@ -58,6 +59,42 @@ maccs_bits = [x.ToBitString() for x in maccs]
 
 x = np.array([list(map(int, x.ToBitString())) for x in maccs])
 
+
+#%%
+tg471 = pd.read_excel('../vitro/data/tg471/tg471.xlsx')
+tg473 = pd.read_excel('../vitro/data/tg473/tg473.xlsx')
+tg476 = pd.read_excel('../vitro/data/tg476/tg476.xlsx')
+tg487 = pd.read_excel('../vitro/data/tg487/tg487.xlsx')
+tg474 = pd.read_excel('../vivo/data/tg474/tg474.xlsx')
+tg475 = pd.read_excel('../vivo/data/tg475/tg475.xlsx')
+tg478 = pd.read_excel('../vivo/data/tg478/tg478.xlsx')
+tg486 = pd.read_excel('../vivo/data/tg486/tg486.xlsx')
+
+df = pd.concat([tg471, tg473, tg476, tg487, tg474, tg475, tg478, tg486])
+
+mols = [Chem.MolFromSmiles(x) for x in df.SMILES]
+
+descriptor_names = [desc[0] for desc in Descriptors._descList]
+calc = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
+descriptors = pd.DataFrame([dict(zip(descriptor_names, calc.CalcDescriptors(m))) for m in mols])
+descriptors = descriptors.dropna(axis = 1)
+
+with open('descriptor_name.json', 'w') as f:
+    json.dump(list(descriptors.columns), f, indent=2)
+
+with open('descriptor_name.json', 'r') as f:
+    descriptor_names = json.load(f)
+
+calc = MoleculeDescriptors.MolecularDescriptorCalculator(descriptor_names)
+
+calc.CalcDescriptors(mols[0])
+descriptors = np.array([list(map(float, calc.CalcDescriptors(m))) for m in mols])
+
+a = np.concatenate([x, descriptors], axis = 1)
+x.shape
+descriptors.shape
+
+a[:, 729:].shape
 
 
 #%%

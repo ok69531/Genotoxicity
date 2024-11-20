@@ -17,6 +17,7 @@ from sklearn.metrics import (
     f1_score,
     classification_report
 )
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.class_weight import compute_sample_weight
 
 from imblearn.over_sampling import SMOTE
@@ -27,10 +28,11 @@ from get_params_comb import load_hyperparameters
 warnings.filterwarnings('ignore')
 logging.basicConfig(format='', level=logging.INFO)
 
+
 args = get_args()
 
 def main():
-    x, y = load_dataset(args.tg_num, args.fp_type)
+    x, y, fp_length = load_dataset(args.tg_num, args.fp_type, args.use_md)
 
     params = load_hyperparameters(args.model, args.tg_num)
     results_dict = {
@@ -56,6 +58,17 @@ def main():
         x_val = x[np.array(val_idx)]; y_val = y[np.array(val_idx)]
         x_test = x[np.array(test_idx)]; y_test = y[np.array(test_idx)]
         
+        if args.use_md:
+            scaler = MinMaxScaler()
+            scaled_train_descriptors = scaler.fit_transform(x_train[:, fp_length:], y_train)
+            x_train[:, fp_length:] = scaled_train_descriptors
+            
+            scaled_val_descriptors = scaler.transform(x_val[:, fp_length:])
+            x_val[:, fp_length:] = scaled_val_descriptors
+            
+            scaled_test_descriptors = scaler.transform(x_test[:, fp_length:])
+            x_test[:, fp_length:] = scaled_test_descriptors
+            
         if args.use_smote:
             smote = SMOTE(random_state = args.smote_seed)
             x_train, y_train = smote.fit_resample(x_train, y_train)
@@ -115,6 +128,8 @@ def main():
     logging.info('')
     logging.info('Model: {}'.format(args.model))
     logging.info('TG: {}'.format(args.tg_num))
+    logging.info('Fingerprint: {}'.format(args.fp_type))
+    logging.info('Use Descriotors: {}'.format(args.use_md))
     logging.info('SMOTE: {}'.format(args.use_smote) )
     logging.info('param: {}'.format(param))
     logging.info('test f1: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_f1s) * 100, np.std(test_f1s) * 100))
