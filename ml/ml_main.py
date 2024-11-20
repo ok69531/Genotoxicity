@@ -32,7 +32,7 @@ logging.basicConfig(format='', level=logging.INFO)
 args = get_args()
 
 def main():
-    x, y, fp_length = load_dataset(args.tg_num, args.fp_type, args.use_md)
+    x, y, fp_length = load_dataset(args)
 
     params = load_hyperparameters(args.model, args.tg_num)
     results_dict = {
@@ -128,9 +128,12 @@ def main():
     logging.info('')
     logging.info('Model: {}'.format(args.model))
     logging.info('TG: {}'.format(args.tg_num))
+    logging.info('Target: {}'.format(args.target))
+    logging.info('')
     logging.info('Fingerprint: {}'.format(args.fp_type))
     logging.info('Use Descriotors: {}'.format(args.use_md))
     logging.info('SMOTE: {}'.format(args.use_smote) )
+    logging.info('')
     logging.info('param: {}'.format(param))
     logging.info('test f1: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_f1s) * 100, np.std(test_f1s) * 100))
     logging.info('test precision: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_precs) * 100, np.std(test_precs) * 100))

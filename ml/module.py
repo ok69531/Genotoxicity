@@ -21,6 +21,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
     parser.add_argument('--model', type = str, default = 'dt', help = 'dt, rf, gbt, xgb, lgb')
+    parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
     parser.add_argument('--fp_type', type = str, default = 'toxprint', help = 'type of fingerprints (toxprint, maccs, topology, morgan, rdkit)')
     parser.add_argument('--train_frac', type = float, default = 0.7, help = 'fraction of train dataset')
     parser.add_argument('--val_frac', type = float, default = 0.1, help = 'fraction of validation and test dataset')
@@ -34,20 +35,29 @@ def get_args():
     return args
 
 
-def load_dataset(tg: int, fp_type: str, use_md: bool):
+def load_dataset(args):
+    tg = args.tg_num
+    fp_type = args.fp_type
+    use_md = args.use_md
+    target = args.target
+    
     if (tg == 471) or (tg == 473) or (tg == 476) or (tg == 487):
         path = f'../vitro/data/tg{tg}/tg{tg}.xlsx'
     else: 
         path = f'../vivo/data/tg{tg}/tg{tg}.xlsx'
     df = pd.read_excel(path)
-    df = df[df.maj.notna()].reset_index(drop = True)
     
+    if target == 'maj':
+        df = df[df.maj.notna()].reset_index(drop = True)
+        y = np.array([1 if x == 'positive' else 0 for x in df.maj])
+    else:
+        y = np.array([1 if x == 'positive' else 0 for x in df.consv])
+        
     x = get_fingerprint(df, fp_type)
     fp_length = x.shape[1]
     if use_md:
         descriptors = get_descriptors(df)
         x = np.concatenate([x, descriptors], axis = 1)
-    y = np.array([1 if x == 'positive' else 0 for x in df.maj])
     
     return x, y, fp_length
 
