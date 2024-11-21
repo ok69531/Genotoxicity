@@ -64,8 +64,8 @@ def get_471_params(model: str):
     
     elif model == 'gbt':
         params_dict = {
-            'learning_rate': [0.01, 0.03, 0.05, 0.1],
-            'n_estimators': [10, 20, 30, 50, 70, 100, 130, 150],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'n_estimators': [10, 30, 50, 70, 100, 130, 150],
             'max_depth': [None, 2, 3, 4],
             'min_samples_split': [2, 3, 4, 5],
             'class_weight': [None, 'balanced']
