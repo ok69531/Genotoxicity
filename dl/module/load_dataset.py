@@ -118,6 +118,10 @@ class GenoDataset(InMemoryDataset):
     def processed_file_names(self):
         return ['data.pt']
     
+    @property
+    def num_classes(self):
+        return 2
+    
     def _load_raw_dataset(self):
         if (self.tg == 471) or (self.tg == 473) or (self.tg == 476) or (self.tg == 487):
             path = f'../vitro/data/{self.dataset}/{self.dataset}.xlsx'
@@ -205,13 +209,16 @@ class GenoDataset(InMemoryDataset):
         
         data_list = []
         for i in range(len(self.raw_data)):
-            data = self.smiles_to_graph(smiles[i])
-            data.y_maj = torch.tensor([1 if self.raw_data.maj[i] == 'positive' else 0]).to(torch.long)
-            data.y_consv = torch.tensor([1 if self.raw_data.consv[i] == 'positive' else 0]).to(torch.long)
-            data.smiles = smiles[i]
-            data.idx = i
-            
-            data_list.append(data)
+            if (self.tg == 471) & (i in [1616, 2896]):
+                pass
+            else:
+                data = self.smiles_to_graph(smiles[i])
+                data.y_maj = torch.tensor([1 if self.raw_data.maj[i] == 'positive' else 0]).to(torch.long)
+                data.y_consv = torch.tensor([1 if self.raw_data.consv[i] == 'positive' else 0]).to(torch.long)
+                data.smiles = smiles[i]
+                data.idx = i
+                
+                data_list.append(data)
         
         return data_list
     

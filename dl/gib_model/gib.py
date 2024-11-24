@@ -1,5 +1,6 @@
 # https://github.com/Samyu0304/graph-information-bottleneck-for-Subgraph-Recognition/tree/main
 
+from multiprocessing.sharedctypes import Value
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -9,6 +10,7 @@ from torch_geometric.utils import to_dense_adj
 
 from .conv_layer import GINConv
 from .encoder import AtomEncoder
+from .floss import FLoss
 
 from sklearn.metrics import (
     precision_score,
@@ -116,14 +118,6 @@ class GIBGIN(nn.Module):
         for conv in self.convs:
             h = conv(h, edge_index, edge_attr)
         
-        # row, col = edge_index
-        # edge_features = torch.zeros_like(h).to(edge_index.device)
-        # edge_features.index_add_(0, row, edge_embedding)
-        
-        # h += edge_features
-        # for conv in self.convs:
-        #     h = conv(h, edge_index)
-        
         assignment = F.softmax(self.assignment(h), dim = 1)
         
         all_sub_embedding, all_trivial_embedding, all_graph_embedding, active_node_index, all_con_penalty = self.aggregate(assignment, h, batch, edge_index)
@@ -169,7 +163,7 @@ class Discriminator(nn.Module):
         return pre
 
 
-def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, args):
+def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, gib_args, args):
     model.train()
     
     total_loss = 0
@@ -179,7 +173,7 @@ def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, 
         out, trivial_out, all_sub_embedding, all_graph_embedding, active_node_index, all_con_penalty = model(data)
         
         # to find phi_2^*
-        for j in range(0, args.inner_loop):
+        for j in range(0, gib_args.inner_loop):
             local_optimizer.zero_grad()
             local_loss = -MI_Est(discriminator, all_graph_embedding.detach(), all_sub_embedding.detach())
             local_loss.backward()
@@ -187,9 +181,13 @@ def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, 
         
         optimizer.zero_grad()
         
-        cls_loss = F.nll_loss(out, data.y.view(-1))
+        if args.target == 'maj':
+            cls_loss = F.nll_loss(out, data.y_maj.view(-1), weight = torch.tensor([1., 10.]))
+            # cls_loss = FLoss()(out[:, 1], data.y_maj.view(-1))
+        elif args.target == 'consv':
+            cls_loss = F.nll_loss(out, data.y_consv.view(-1))
         mi_loss = MI_Est(discriminator, all_graph_embedding, all_sub_embedding)
-        loss = (1 - args.pp_weight) * (cls_loss + args.beta * mi_loss) + args.pp_weight * all_con_penalty
+        loss = (1 - gib_args.pp_weight) * (cls_loss + gib_args.beta * mi_loss) + gib_args.pp_weight * all_con_penalty
         
         loss.backward()
         total_loss += loss.item() * num_graphs(data)
@@ -219,7 +217,7 @@ def MI_Est(discriminator, graph_embeddings, sub_embeddings):
 
 
 @torch.no_grad()
-def gib_eval(model, device, loader):
+def gib_eval(model, device, loader, args):
     model.eval()
     
     loss = 0
@@ -234,12 +232,21 @@ def gib_eval(model, device, loader):
         trivial_pred = trivial_out.max(1)[1]
         # correct += pred.eq(data.y.view(-1)).sum().item()
         
-        y.append(data.y)
+        if args.target == 'maj':
+            y.append(data.y_maj)
+        elif args.target == 'consv':
+            y.append(data.y_consv)
         sub_preds.append(pred)
         trivial_preds.append(trivial_pred)
         sub_pred_prob.append(out[:, 1])
         trivial_pred_prob.append(trivial_out[:, 1])
-        loss += F.nll_loss(out, data.y.view(-1), reduction='sum').item()
+        
+        if args.target == 'maj':
+            # loss_tmp = FLoss(beta=100)(out[:,1], data.y_maj.view(-1))
+            # loss += loss_tmp.sum().item()
+            loss += F.nll_loss(out, data.y_maj.view(-1), reduction='sum').item()
+        elif args.target == 'consv':
+            loss += F.nll_loss(out, data.y_consv.view(-1), reduction='sum').item()
     
     y = torch.cat(y).cpu().numpy()
     sub_preds = torch.cat(sub_preds).cpu().numpy()
