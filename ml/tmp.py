@@ -121,9 +121,9 @@ print(np.unique(y, return_counts = True)[1]/len(y))
 
 
 #%%
-tg_num = 471
-path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
-# path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
+tg_num = 478
+# path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
+path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
 
 df = pd.read_excel(path)
 df = df[df.maj.notna()].reset_index(drop = True)
@@ -159,7 +159,7 @@ while len(seeds) < 10:
     test_x = x[np.array(test_idx)]; test_y = y[np.array(test_idx)]
 
 
-    model = DecisionTreeClassifier(random_state=seed)
+    model = RandomForestClassifier(random_state=seed)
     model.fit(train_x, train_y)
 
     try:
