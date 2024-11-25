@@ -45,7 +45,7 @@ def main():
     seeds = get_seed(args.tg_num)
     
     for seed in seeds:
-        logging.info('==================== Seed: {} ===================='.format(seed))
+        logging.info('==================== Seed: {} ===================='.format(seeds.index(seed)))
         torch.manual_seed(seed)
         
         if (args.tg_num == 475) or (args.tg_num == 478) or (args.tg_num == 486):
