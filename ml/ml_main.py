@@ -51,13 +51,28 @@ def main():
     elif args.tg_num == 487:
         seed = []
     elif args.tg_num == 474:
-        seeds = [322, 1190, 1485, 1747, 1915, 2509, 3184, 3720, 4371, 5087]
+        seeds = []
     elif args.tg_num == 475:
         seeds = []
     elif args.tg_num == 478:
         seeds = []
-    elif args.tg_num == 486:
-        seeds = []
+    
+    # if args.tg_num == 471:
+    #     seeds = [8, 14, 51, 79, 123, 132, 139, 161, 201, 280]
+    # elif args.tg_num == 473:
+    #     seeds = [48, 76, 214, 222, 424, 475, 550, 563, 634, 731]
+    # elif args.tg_num == 476:
+    #     seeds = [174, 752, 1224, 1378, 1448, 1545, 2042, 2147, 2362, 3554]
+    # elif args.tg_num == 487:
+    #     seed = [17, 28, 122, 173, 189, 206, 209, 225, 245, 268]
+    # elif args.tg_num == 474:
+    #     seeds = [322, 1190, 1485, 1747, 1915, 2509, 3184, 3720, 4371, 5087]
+    # elif args.tg_num == 475:
+    #     seeds = [17, 21, 113, 229, 238, 240, 245, 272, 295, 372]
+    # elif args.tg_num == 478:
+    #     seeds = [4, 8, 16, 33, 38, 41, 47, 63, 68, 74]
+    # elif args.tg_num == 486:
+    #     seeds = []
     
     for seed in seeds:
         logging.info('==================== Seed: {} ===================='.format(seed))

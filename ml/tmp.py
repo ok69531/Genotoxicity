@@ -121,9 +121,9 @@ print(np.unique(y, return_counts = True)[1]/len(y))
 
 
 #%%
-tg_num = 474
-# path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
-path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
+tg_num = 471
+path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
+# path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
 
 df = pd.read_excel(path)
 df = df[df.maj.notna()].reset_index(drop = True)
@@ -131,6 +131,7 @@ df = df[df.maj.notna()].reset_index(drop = True)
 # toxprint
 x = df.iloc[:, 5:].to_numpy()
 y = np.array([1 if x == 'positive' else 0 for x in df.maj])
+# y = np.array([1 if x == 'positive' else 0 for x in df.consv])
 
 
 #%%
@@ -161,23 +162,28 @@ while len(seeds) < 10:
     model = DecisionTreeClassifier(random_state=seed)
     model.fit(train_x, train_y)
 
-    val_pred = model.predict(val_x)
-    val_perd_prob = model.predict_proba(val_x)[:, 1]
+    try:
+        val_pred = model.predict(val_x)
+        val_perd_prob = model.predict_proba(val_x)[:, 1]
 
-    test_pred = model.predict(test_x)
-    test_perd_prob = model.predict_proba(test_x)[:, 1]
-    
-    if f1_score(test_y, test_pred) > 0.5: 
-        seeds.append(seed)
+        test_pred = model.predict(test_x)
+        test_perd_prob = model.predict_proba(test_x)[:, 1]
         
-        print(seed)
-        print(classification_report(test_y, test_pred))
+        if f1_score(test_y, test_pred) > 0.5: 
+            seeds.append(seed)
+            
+            print(seed)
+            print(classification_report(test_y, test_pred))
+    except: pass
         
     seed += 1
     
 
-#%%
 print(len(seeds))
+print(seeds)
+
+
+#%%
 for seed in seeds:
     torch.manual_seed(seed)
 
@@ -200,7 +206,9 @@ for seed in seeds:
 
 
     model = XGBClassifier(random_state=seed)
-    # model = RandomForestClassifier(random_state=seed)
+    # model = LGBMClassifier(random_state=seed)
+    # model = LGBMClassifier(random_state=seed, class_weight='balanced')
+    # model = RandomForestClassifier(random_state=seed, class_weight='balanced')
     model.fit(train_x, train_y)
 
     val_pred = model.predict(val_x)
