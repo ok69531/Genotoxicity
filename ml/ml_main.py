@@ -43,9 +43,21 @@ def main():
     }
 
     if args.tg_num == 471:
-        seeds = [4, 47, 56, 61, 67, 73, 76, 79, 88, 106]
+        seeds = [8, 14, 51, 79, 123, 132, 139, 161, 201, 280]
     elif args.tg_num == 473:
-        seeds = [6, 31, 37, 76, 158, 288, 314, 347, 380, 396]
+        seeds = []
+    elif args.tg_num == 476:
+        seeds = []
+    elif args.tg_num == 487:
+        seed = []
+    elif args.tg_num == 474:
+        seeds = [322, 1190, 1485, 1747, 1915, 2509, 3184, 3720, 4371, 5087]
+    elif args.tg_num == 475:
+        seeds = []
+    elif args.tg_num == 478:
+        seeds = []
+    elif args.tg_num == 486:
+        seeds = []
     
     for seed in seeds:
         logging.info('==================== Seed: {} ===================='.format(seed))

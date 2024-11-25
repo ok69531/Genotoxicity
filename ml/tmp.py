@@ -41,7 +41,7 @@ warnings.filterwarnings('ignore')
 
 
 #%%
-tg_num = 471
+tg_num = 473
 path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
 # path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
 
@@ -119,6 +119,103 @@ print(np.unique(test_y, return_counts = True)[1]/len(test_x))
 
 print(np.unique(y, return_counts = True)[1]/len(y))
 
+
+#%%
+tg_num = 474
+# path = f'../vitro/data/tg{tg_num}/tg{tg_num}.xlsx'
+path = f'../vivo/data/tg{tg_num}/tg{tg_num}.xlsx'
+
+df = pd.read_excel(path)
+df = df[df.maj.notna()].reset_index(drop = True)
+
+# toxprint
+x = df.iloc[:, 5:].to_numpy()
+y = np.array([1 if x == 'positive' else 0 for x in df.maj])
+
+
+#%%
+seed = 0
+seeds = []
+
+while len(seeds) < 10:
+    torch.manual_seed(seed)
+
+    train_frac = 0.8
+    if (tg_num == 475) or (tg_num == 478) or (tg_num == 486):
+            train_frac = 0.7
+    val_frac = 0.1
+
+    num_train = int(len(x) * train_frac)
+    num_valid = int(len(x) * val_frac)
+    num_test = len(x) - (num_train + num_valid)
+    assert num_train + num_valid + num_test == len(df)
+
+    indices = torch.arange(len(x))
+    train_idx, val_idx, test_idx = random_split(indices, [num_train, num_valid, num_test])
+
+    train_x = x[np.array(train_idx)]; train_y = y[np.array(train_idx)]
+    val_x = x[np.array(val_idx)]; val_y = y[np.array(val_idx)]
+    test_x = x[np.array(test_idx)]; test_y = y[np.array(test_idx)]
+
+
+    model = DecisionTreeClassifier(random_state=seed)
+    model.fit(train_x, train_y)
+
+    val_pred = model.predict(val_x)
+    val_perd_prob = model.predict_proba(val_x)[:, 1]
+
+    test_pred = model.predict(test_x)
+    test_perd_prob = model.predict_proba(test_x)[:, 1]
+    
+    if f1_score(test_y, test_pred) > 0.5: 
+        seeds.append(seed)
+        
+        print(seed)
+        print(classification_report(test_y, test_pred))
+        
+    seed += 1
+    
+
+#%%
+print(len(seeds))
+for seed in seeds:
+    torch.manual_seed(seed)
+
+    train_frac = 0.8
+    if (tg_num == 475) or (tg_num == 478) or (tg_num == 486):
+            train_frac = 0.7
+    val_frac = 0.1
+
+    num_train = int(len(x) * train_frac)
+    num_valid = int(len(x) * val_frac)
+    num_test = len(x) - (num_train + num_valid)
+    assert num_train + num_valid + num_test == len(df)
+
+    indices = torch.arange(len(x))
+    train_idx, val_idx, test_idx = random_split(indices, [num_train, num_valid, num_test])
+
+    train_x = x[np.array(train_idx)]; train_y = y[np.array(train_idx)]
+    val_x = x[np.array(val_idx)]; val_y = y[np.array(val_idx)]
+    test_x = x[np.array(test_idx)]; test_y = y[np.array(test_idx)]
+
+
+    model = XGBClassifier(random_state=seed)
+    # model = RandomForestClassifier(random_state=seed)
+    model.fit(train_x, train_y)
+
+    val_pred = model.predict(val_x)
+    val_perd_prob = model.predict_proba(val_x)[:, 1]
+
+    test_pred = model.predict(test_x)
+    test_perd_prob = model.predict_proba(test_x)[:, 1]
+    
+    print(seed)
+    print(classification_report(test_y, test_pred))
+    
+    # print(classification_report(train_y, model.predict(train_x)))
+    # print(seed)
+    # print(classification_report(val_y, val_pred))
+    # print(classification_report(test_y, test_pred))
 
 
 #%%
