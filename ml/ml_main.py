@@ -43,7 +43,7 @@ def main():
     }
 
     if args.tg_num == 471:
-        seeds = [8, 14, 51, 79, 123, 132, 139, 161, 201, 280]
+        seeds = [4, 47, 61, 67, 73, 76, 79, 88, 106, 123]
     elif args.tg_num == 473:
         seeds = []
     elif args.tg_num == 476:
