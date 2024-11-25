@@ -17,7 +17,7 @@ from module.utils import set_seed
 from gib_model.gin import (
     GraphIsomorphismNetwork,
     gin_train,
-    gin_eval
+    gin_evaluation
 )
 
 warnings.filterwarnings('ignore')
@@ -25,13 +25,17 @@ logging.basicConfig(format = '', level = logging.INFO)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type = str, default = 'gib', help = 'gib, vgib, pgib, gsat')
+parser.add_argument('--model', type = str, default = 'gin', help = 'gcn, gin')
 parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
 parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
 parser.add_argument('--train_frac', type = float, default = 0.8)
 parser.add_argument('--val_frac', type = float, default = 0.1)
 parser.add_argument('--num_runs', type = int, default = 10)
 parser.add_argument('--batch_size', type = int, default = 128)
+parser.add_argument('--readout', type = int, default = max)
+parser.add_argument('--hidden_dim', type = int, default = 128)
+parser.add_argument('--num_layers', type = int, default = 5)
+parser.add_argument('--lr', type = float, default = 0.001)
 try:
     args = parser.parse_args()
 except:
@@ -43,10 +47,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
 dataset = GenoDataset(root = 'dataset', tg_num = 471)
-# for i in range(len(dataset)):
-#     if dataset[i].x.shape[0] == 1:
-#         print(i, dataset[i].x.shape)
-# dataset[1616].edge_index
 
 avg_nodes = 0.0
 avg_edge_index = 0.0
@@ -80,27 +80,20 @@ train_loader = DataLoader(dataset[list(train_idx)], batch_size = args.batch_size
 val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, shuffle = False)
 test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
-if args.model == 'gib':
-    gib_args.num_layers = 3
-    gib_args.hidden = 512
-    gib_args.lr = 0.001
-    # gib_args.num_layers = 5
-    # gib_args.hidden = 128
-    # gib_args.lr = 0.001
-    model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
-    discriminator = Discriminator(gib_args.hidden).to(device)
-    optimizer = Adam(model.parameters(), lr = gib_args.lr)
-    optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr)
-    max_epochs = gib_args.epochs
+if args.model == 'gin':
+    model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
+    criterion = torch.nn.BCEWithLogitsLoss()
+    optimizer = Adam(model.parameters(), lr = args.lr)
+    max_epochs = 100
 
 best_val_loss, best_val_auc, best_val_f1 = 0, 0, 0
 final_test_loss, final_test_auc, final_test_f1 = 0, 0, 0
 
 for epoch in range(1, max_epochs+1):
-    if args.model == 'gib':
-        train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, gib_args, args)
-        val_loss, val_sub_metrics, _ = gib_eval(model, device, val_loader, args)
-        test_loss, test_sub_metrics, _ = gib_eval(model, device, test_loader, args)
+    if args.model == 'gin':
+        train_loss, _ = gin_train(model, optimizer, device, train_loader, criterion)
+        val_loss, val_sub_metrics, _ = gin_evaluation(model, device, val_loader, criterion)
+        test_loss, test_sub_metrics, _ = gin_evaluation(model, device, test_loader, criterion)
 
     logging.info('=== epoch: {}'.format(epoch))
     logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
@@ -116,9 +109,9 @@ for epoch in range(1, max_epochs+1):
         final_test_f1 = test_sub_metrics['f1']; final_test_auc = test_sub_metrics['auc']
         final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
         
-        if args.model == 'gib':
-            params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
-            optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
+        if args.model == 'gin':
+            params = deepcopy(model.state_dict())
+            optim_params = deepcopy(optimizer.state_dict())
         
 val_losses.append(best_val_loss); test_losses.append(final_test_loss)
 val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)

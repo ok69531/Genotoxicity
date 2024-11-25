@@ -83,12 +83,9 @@ val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, sh
 test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
 if args.model == 'gib':
-    gib_args.num_layers = 3
-    gib_args.hidden = 512
+    gib_args.num_layers = 5
+    gib_args.hidden = 128
     gib_args.lr = 0.001
-    # gib_args.num_layers = 5
-    # gib_args.hidden = 128
-    # gib_args.lr = 0.001
     model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
     discriminator = Discriminator(gib_args.hidden).to(device)
     optimizer = Adam(model.parameters(), lr = gib_args.lr)

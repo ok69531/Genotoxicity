@@ -39,16 +39,9 @@ def get_readout_layers(readout):
 
 
 class GraphIsomorphismNetwork(nn.Module):
-    ''' 
-        MI loss 부분: node를 bernoulli distribution에서 sampling 
-        Backdoor Adjustment: empirical distribution 
-        
-        node assignment matrix: batch 단위
-    '''
     def __init__(self, output_dim, args):
         super(GraphIsomorphismNetwork, self).__init__()
         
-        self.r = args.r
         self.hidden_dim = args.hidden_dim
         self.num_layers = args.num_layers
         self.readout_layer = get_readout_layers(args.readout)

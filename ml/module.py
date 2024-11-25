@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('--model', type = str, default = 'dt', help = 'dt, rf, gbt, xgb, lgb')
     parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
     parser.add_argument('--fp_type', type = str, default = 'toxprint', help = 'type of fingerprints (toxprint, maccs, topology, morgan, rdkit)')
-    parser.add_argument('--train_frac', type = float, default = 0.7, help = 'fraction of train dataset')
+    parser.add_argument('--train_frac', type = float, default = 0.8, help = 'fraction of train dataset')
     parser.add_argument('--val_frac', type = float, default = 0.1, help = 'fraction of validation and test dataset')
     parser.add_argument('--use_smote', type = bool, default = False, help = 'whether using SMOTE')
     parser.add_argument('--smote_seed', type = int, default = 42)

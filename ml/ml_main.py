@@ -42,9 +42,17 @@ def main():
         for i, p in enumerate(params)
     }
 
-    for seed in range(10):
+    if args.tg_num == 471:
+        seeds = [4, 47, 56, 61, 67, 73, 76, 79, 88, 106]
+    elif args.tg_num == 473:
+        seeds = [6, 31, 37, 76, 158, 288, 314, 347, 380, 396]
+    
+    for seed in seeds:
         logging.info('==================== Seed: {} ===================='.format(seed))
         torch.manual_seed(seed)
+        
+        if (args.tg_num == 475) or (args.tg_num == 478) or (args.tg_num == 486):
+            args.train_frac = 0.7
         
         num_train = int(len(x) * args.train_frac)
         num_valid = int(len(x) * args.val_frac)
@@ -113,7 +121,7 @@ def main():
     test_accs = best_result['test']['acc']
     test_aucs = best_result['test']['auc']
     
-    save_path = 'saved_result'
+    save_path = f'saved_result/tg{args.tg_num}'
     if os.path.isdir(save_path):
         pass
     else:
@@ -121,14 +129,14 @@ def main():
     
     if args.use_smote:
         if args.use_md:
-            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_md_smote_{args.model}.json')
+            save_path = os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.fp_type}_md_smote_{args.model}.json')
         else:
-            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_smote_{args.model}.json')
+            save_path = os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.fp_type}_smote_{args.model}.json')
     else:
         if args.use_md:
-            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_md_{args.model}.json')
+            save_path = os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.fp_type}_md_{args.model}.json')
         else:
-            save_path = os.path.join(save_path, f'tg{args.tg_num}_{args.fp_type}_{args.model}.json')
+            save_path = os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.fp_type}_{args.model}.json')
     json.dump(best_result, open(save_path, 'w'))
     
     logging.info('')
