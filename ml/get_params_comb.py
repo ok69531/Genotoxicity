@@ -100,7 +100,7 @@ def get_473_params(model: str):
             'criterion': ['gini', 'entropy'],
             'max_depth': [None, 10, 20, 25, 30, 35, 40, 45, 50, 55],
             'min_samples_split': [2, 3, 4, 5, 7, 10],
-            'min_samples_leaf': [1, 2, 3, 4, 5],
+            'min_samples_leaf': [2, 3, 4, 5],
             'class_weight': [None, 'balanced']
         }
 
@@ -115,9 +115,9 @@ def get_473_params(model: str):
     
     elif model == 'gbt':
         params_dict = {
-            'learning_rate': [0.01, 0.03, 0.05, 0.1],
-            'n_estimators': [5, 10, 20, 30, 50, 70, 100, 130, 150],
-            'max_depth': [None, 3, 7, 10, 20, 30],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'n_estimators': [5, 10, 20, 30, 50, 70, 100, 130],
+            'max_depth': [None, 3, 7, 10, 20],
             'min_samples_split': [2, 3, 4, 5],
             'class_weight': [None, 'balanced']
             }
@@ -166,8 +166,8 @@ def get_476_params(model: str):
     
     elif model == 'gbt':
         params_dict = {
-            'learning_rate': [0.01, 0.03, 0.05, 0.1],
-            'n_estimators': [5, 10, 20, 30, 50, 70, 100, 130, 150],
+            'learning_rate': [0.03, 0.05, 0.1],
+            'n_estimators': [5, 10, 20, 30, 50, 70, 100, 130],
             'max_depth': [None, 10, 25, 35, 40],
             'min_samples_split': [2, 3, 4, 5],
             'class_weight': [None, 'balanced']
