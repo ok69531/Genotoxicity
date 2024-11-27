@@ -138,7 +138,7 @@ def main():
             test_pred_prob = model.predict_proba(x_test)[:, 1]
             
             test_df[f'{args.model}_pred'] = test_pred
-            # test_df['pred_prob'] = test_pred_prob
+            test_df[f'{args.model}_pred_prob'] = test_pred_prob
         
         test_results_dict[f'seed{seeds.index(seed)}'] = test_df
     
