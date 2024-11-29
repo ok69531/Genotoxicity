@@ -209,16 +209,16 @@ class GenoDataset(InMemoryDataset):
         
         data_list = []
         for i in range(len(self.raw_data)):
-            if (self.tg == 471) & (i in [1616, 2896]):
-                pass
-            else:
-                data = self.smiles_to_graph(smiles[i])
-                data.y_maj = torch.tensor([1 if self.raw_data.maj[i] == 'positive' else 0]).to(torch.long)
-                data.y_consv = torch.tensor([1 if self.raw_data.consv[i] == 'positive' else 0]).to(torch.long)
-                data.smiles = smiles[i]
-                data.idx = i
-                
-                data_list.append(data)
+            # if (self.tg == 471) & (i in [1616, 2896]):
+            #     pass
+            # else:
+            data = self.smiles_to_graph(smiles[i])
+            data.y_maj = torch.tensor([1 if self.raw_data.maj[i] == 'positive' else 0]).to(torch.long)
+            data.y_consv = torch.tensor([1 if self.raw_data.consv[i] == 'positive' else 0]).to(torch.long)
+            data.smiles = smiles[i]
+            data.idx = i
+            
+            data_list.append(data)
         
         return data_list
     

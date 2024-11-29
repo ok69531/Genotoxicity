@@ -55,6 +55,7 @@ class GraphIsomorphismNetwork(nn.Module):
         
         # classifier
         self.cls = nn.Linear(self.hidden_dim, output_dim)
+        self.softmax = nn.Softmax(dim = -1)
         
     def forward(self, data):
         x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
@@ -68,11 +69,12 @@ class GraphIsomorphismNetwork(nn.Module):
             graph_feature = readout(node_features, batch)
 
         logits = self.cls(graph_feature)
+        probs = self.softmax(logits)
 
-        return logits, graph_feature
+        return probs, graph_feature
 
 
-def gin_train(model, optimizer, device, loader, criterion):
+def gin_train(model, optimizer, device, loader, criterion, args):
     model.train()
     
     acc = []
@@ -81,9 +83,12 @@ def gin_train(model, optimizer, device, loader, criterion):
     for i, batch in enumerate(loader):
         batch = batch.to(device)
         
-        logits, graph_feature = model(batch)
+        probs, graph_feature = model(batch)
         
-        loss = criterion(logits, batch.y)
+        if args.target == 'maj':
+            loss = criterion(probs, batch.y_maj)
+        elif args.target == 'consv':
+            loss = criterion(probs, batch.y_consv)
         
         # optimization
         optimizer.zero_grad()
@@ -91,15 +96,18 @@ def gin_train(model, optimizer, device, loader, criterion):
         optimizer.step()
         
         # record
-        _, prediction = torch.max(logits, -1)
+        _, prediction = torch.max(probs, -1)
         loss_list.append(loss.item())
-        acc.append(prediction.eq(batch.y).cpu().numpy())
+        if args.target == 'maj':
+            acc.append(prediction.eq(batch.y_maj).cpu().numpy())
+        elif args.target == 'consv':
+            acc.append(prediction.eq(batch.y_consv).cpu().numpy())
     
     return np.average(loss_list), np.concatenate(acc, axis = 0).mean()
 
 
 @torch.no_grad()
-def gin_evaluation(model, device, loader, criterion):
+def gin_evaluation(model, device, loader, criterion, args):
     model.eval()
     
     y = []
@@ -109,17 +117,20 @@ def gin_evaluation(model, device, loader, criterion):
     
     for _, batch in enumerate(loader):
         batch = batch.to(device)
-        logits, graph_feature = model(batch)
-        
-        probs = nn.Softmax(dim = -1)(logits)[:, 1]
-        loss = criterion(logits, batch.y)
+        probs, graph_feature = model(batch)
         
         # record
-        _, prediction = torch.max(logits, -1)
-        y.append(batch.y)
+        _, prediction = torch.max(probs, -1)
+        if args.target == 'maj':
+            y.append(batch.y_maj)
+            loss = criterion(probs, batch.y_maj)
+        elif args.target == 'consv':
+            y.append(batch.y_consv)
+            loss = criterion(probs, batch.y_consv)
+        
         loss_list.append(loss.item())
         predictions.append(prediction)
-        pred_probs.append(probs)
+        pred_probs.append(probs[:, 1])
     
     loss = np.average(loss_list)
     y = torch.cat(y).cpu().numpy()

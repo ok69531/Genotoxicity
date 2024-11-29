@@ -11,7 +11,7 @@ from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
 from module.load_dataset import GenoDataset
-from module.utils import set_seed
+from module.utils import set_seed, get_seed
 
 # gib
 from arguments.gib_args import gib_args
@@ -48,7 +48,8 @@ dataset = GenoDataset(root = 'dataset', tg_num = 471)
 # for i in range(len(dataset)):
 #     if dataset[i].x.shape[0] == 1:
 #         print(i, dataset[i].x.shape)
-# dataset[1616].edge_index
+
+remove_idx = [1616, 2896]
 
 avg_nodes = 0.0
 avg_edge_index = 0.0
@@ -65,67 +66,78 @@ test_losses, test_aucs, test_f1s, test_accs, test_precs, test_recs = [], [], [],
 params_list = []
 optim_params_list = []
 
-# for seed in range(args.num_runs):
-seed = 0
-logging.info(f'======================= Run: {seed} =================')
-set_seed(seed)
+seeds = get_seed(args.tg_num)
+seed = seeds[0]
+for seed in seeds:
+    logging.info(f'======================= Run: {seeds.index(seed)} =================')
+    set_seed(seed)
 
-num_train = int(len(dataset) * args.train_frac)
-num_valid = int(len(dataset) * args.val_frac)
-num_test = len(dataset) - (num_train + num_valid)
-assert num_train + num_valid + num_test == len(dataset)
+    num_train = int(len(dataset) * args.train_frac)
+    num_valid = int(len(dataset) * args.val_frac)
+    num_test = len(dataset) - (num_train + num_valid)
+    assert num_train + num_valid + num_test == len(dataset)
 
-indices = torch.arange(len(dataset))
-train_idx, val_idx, test_idx = random_split(indices, [num_train, num_valid, num_test])
+    indices = torch.arange(len(dataset))
+    train_idx, val_idx, test_idx = random_split(indices, [num_train, num_valid, num_test])
 
-train_loader = DataLoader(dataset[list(train_idx)], batch_size = args.batch_size, shuffle = True)
-val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, shuffle = False)
-test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
+    if (args.model == 'gib') or (args.model == 'vgib'):
+        train_idx = [x.item() for x in train_idx if x.item() not in remove_idx]
+        val_idx = [x.item() for x in val_idx if x.item() not in remove_idx]
+        test_idx = [x.item() for x in test_idx if x.item() not in remove_idx]
 
-if args.model == 'gib':
-    gib_args.num_layers = 5
-    gib_args.hidden = 128
-    gib_args.lr = 0.001
-    model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
-    discriminator = Discriminator(gib_args.hidden).to(device)
-    optimizer = Adam(model.parameters(), lr = gib_args.lr)
-    optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr)
-    max_epochs = gib_args.epochs
+        train_loader = DataLoader(dataset[train_idx], batch_size = args.batch_size, shuffle = True)
+        val_loader = DataLoader(dataset[val_idx], batch_size = args.batch_size, shuffle = False)
+        test_loader = DataLoader(dataset[test_idx], batch_size = args.batch_size, shuffle = False)
+    else:
+        train_loader = DataLoader(dataset[list(train_idx)], batch_size = args.batch_size, shuffle = True)
+        val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, shuffle = False)
+        test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
-best_val_loss, best_val_auc, best_val_f1 = 0, 0, 0
-final_test_loss, final_test_auc, final_test_f1 = 0, 0, 0
-
-for epoch in range(1, max_epochs+1):
     if args.model == 'gib':
-        train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, gib_args, args)
-        val_loss, val_sub_metrics, _ = gib_eval(model, device, val_loader, args)
-        test_loss, test_sub_metrics, _ = gib_eval(model, device, test_loader, args)
-
-    logging.info('=== epoch: {}'.format(epoch))
-    logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
-                        train_loss, val_loss, val_sub_metrics['auc'], val_sub_metrics['f1'],
-                        test_loss, test_sub_metrics['auc'], test_sub_metrics['f1']))
-
-    if (val_sub_metrics['f1'] > best_val_f1) or \
-        ((val_loss < best_val_loss) and (val_sub_metrics['f1'] == best_val_f1)):
-        best_val_loss = val_loss
-        best_val_f1 = val_sub_metrics['f1']; best_val_auc = val_sub_metrics['auc']
-        best_val_acc = val_sub_metrics['accuracy']; best_val_prec = val_sub_metrics['precision']; best_val_rec = val_sub_metrics['recall']
-        final_test_loss = test_loss
-        final_test_f1 = test_sub_metrics['f1']; final_test_auc = test_sub_metrics['auc']
-        final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
+        max_epochs = gib_args.epochs
+        # gib_args.num_layers = 5
+        # gib_args.hidden = 128
+        # gib_args.lr = 0.001
         
+        model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
+        discriminator = Discriminator(gib_args.hidden).to(device)
+        optimizer = Adam(model.parameters(), lr = gib_args.lr)
+        optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr)
+
+    best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
+    final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
+
+    for epoch in range(1, max_epochs+1):
         if args.model == 'gib':
-            params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
-            optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
-        
-val_losses.append(best_val_loss); test_losses.append(final_test_loss)
-val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)
-val_f1s.append(best_val_f1); test_f1s.append(final_test_f1)
-val_accs.append(best_val_acc); test_accs.append(final_test_acc)
-val_precs.append(best_val_prec); test_precs.append(final_test_prec)
-val_recs.append(best_val_rec); test_recs.append(final_test_rec)
-params_list.append(params); optim_params_list.append(optim_params)
+            train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, gib_args, args)
+            val_loss, val_sub_metrics, _ = gib_eval(model, device, val_loader, args)
+            test_loss, test_sub_metrics, _ = gib_eval(model, device, test_loader, args)
+
+        logging.info('=== epoch: {}'.format(epoch))
+        logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
+                            train_loss, val_loss, val_sub_metrics['auc'], val_sub_metrics['f1'],
+                            test_loss, test_sub_metrics['auc'], test_sub_metrics['f1']))
+
+        if (val_sub_metrics['f1'] > best_val_f1) or \
+            ((val_loss < best_val_loss) and (val_sub_metrics['f1'] == best_val_f1)):
+            best_val_loss = val_loss
+            best_val_f1 = val_sub_metrics['f1']; best_val_auc = val_sub_metrics['auc']
+            best_val_acc = val_sub_metrics['accuracy']; best_val_prec = val_sub_metrics['precision']; best_val_rec = val_sub_metrics['recall']
+            final_test_loss = test_loss
+            final_test_f1 = test_sub_metrics['f1']; final_test_auc = test_sub_metrics['auc']
+            final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
+            
+            if args.model == 'gib':
+                params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
+                optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
+            
+    val_losses.append(best_val_loss); test_losses.append(final_test_loss)
+    val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)
+    val_f1s.append(best_val_f1); test_f1s.append(final_test_f1)
+    val_accs.append(best_val_acc); test_accs.append(final_test_acc)
+    val_precs.append(best_val_prec); test_precs.append(final_test_prec)
+    val_recs.append(best_val_rec); test_recs.append(final_test_rec)
+    params_list.append(params); optim_params_list.append(optim_params)
 
 logging.info('')
 logging.info('Model: {}'.format(args.model))

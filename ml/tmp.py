@@ -169,6 +169,9 @@ while len(seeds) < 10:
         test_pred = model.predict(test_x)
         test_perd_prob = model.predict_proba(test_x)[:, 1]
         
+        roc_auc_score(val_y, val_perd_prob)
+        roc_auc_score(test_y, test_perd_prob)
+        
         if f1_score(test_y, test_pred) > 0.5: 
             seeds.append(seed)
             
