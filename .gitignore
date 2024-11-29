@@ -13,6 +13,6 @@ SLURM*
 *.sh
 wandb
 *_src.json
-dataset
+dl/dataset/
 wandb_key.txt
 
