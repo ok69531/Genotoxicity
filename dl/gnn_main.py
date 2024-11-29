@@ -142,7 +142,7 @@ def main():
         pass
     else:
         os.makedirs(save_path)
-    os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.model}')
+    save_path = os.path.join(save_path, f'{args.target}_tg{args.tg_num}_{args.model}.pt')
     torch.save(checkpoints, save_path)
     
     logging.info('')
