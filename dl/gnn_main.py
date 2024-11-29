@@ -92,7 +92,7 @@ def main():
             # args.lr = 0.001
             # args.epochs = 300
             model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
-            criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]))
+            criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]).to(device))
             optimizer = Adam(model.parameters(), lr = args.lr)
 
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
