@@ -57,7 +57,7 @@ sweep_configuration = {
         'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7]}
     }       
 }
-sweep_id = wandb.sweep(sweep_configuration, project = 'gib_genotoxicity')
+sweep_id = wandb.sweep(sweep_configuration, project = f'gib_tg{args.tg_num}_genotoxicity')
 
 
 def main():

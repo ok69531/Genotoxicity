@@ -57,7 +57,7 @@ sweep_configuration = {
         'epochs': {'values': [100, 300]}
     }       
 }
-sweep_id = wandb.sweep(sweep_configuration, project = 'gnn_genotoxicity')
+sweep_id = wandb.sweep(sweep_configuration, project = f'gnn_tg{args.tg_num}_genotoxicity')
 
 
 def main():
