@@ -51,8 +51,8 @@ sweep_configuration = {
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
         'batch_size': {'values': [32, 64, 128]},
-        'hidden_dim': {'values': [32, 64, 128, 300]},
-        'num_layers': {'values': [2, 3, 4, 5]},
+        'hidden_dim': {'values': [32, 64, 128, 300, 512]},
+        'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
         'lr': {'values': [0.001, 0.003]},
         'epochs': {'values': [100, 300]}
     }       
@@ -165,4 +165,4 @@ def main():
     logging.info('test accuracy: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_accs) * 100, np.std(test_accs) * 100))
     logging.info('test roc-auc: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_aucs) * 100, np.std(test_aucs) * 100))
 
-wandb.agent(sweep_id = sweep_id, function = main, count = 100)
+wandb.agent(sweep_id = sweep_id, function = main, count = 300)
