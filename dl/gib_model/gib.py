@@ -182,10 +182,10 @@ def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, 
         optimizer.zero_grad()
         
         if args.target == 'maj':
-            cls_loss = F.nll_loss(out, data.y_maj.view(-1), weight = torch.tensor([1., 10.]))
+            cls_loss = F.nll_loss(out, data.y_maj.view(-1), weight = torch.tensor([1., 10.]).to(device))
             # cls_loss = FLoss()(out[:, 1], data.y_maj.view(-1))
         elif args.target == 'consv':
-            cls_loss = F.nll_loss(out, data.y_consv.view(-1), weight = torch.tensor([1., 10.]))
+            cls_loss = F.nll_loss(out, data.y_consv.view(-1), weight = torch.tensor([1., 10.]).to(device))
         mi_loss = MI_Est(discriminator, all_graph_embedding, all_sub_embedding)
         loss = (1 - gib_args.pp_weight) * (cls_loss + gib_args.beta * mi_loss) + gib_args.pp_weight * all_con_penalty
         
