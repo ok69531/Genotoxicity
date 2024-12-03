@@ -92,6 +92,8 @@ def main():
         remove_idx = [662, 1073, 1146, 1277]
     elif args.tg_num == 475:
         remove_idx = [100]
+    else:
+        remove_idx = []
 
     avg_nodes = 0.0
     avg_edge_index = 0.0
