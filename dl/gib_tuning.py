@@ -45,7 +45,7 @@ except:
 
 wandb.login(key = open('wandb_key.txt', 'r').readline())
 sweep_configuration = {
-    'method': 'bayes',
+    'method': 'random',
     'name': 'sweep',
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
