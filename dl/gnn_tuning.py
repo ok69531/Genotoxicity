@@ -79,7 +79,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
-    dataset = GenoDataset(root = 'dataset', tg_num = 471)
+    dataset = GenoDataset(root = 'dataset', tg_num = args.tg_num)
 
     avg_nodes = 0.0
     avg_edge_index = 0.0
@@ -101,7 +101,10 @@ def main():
     # for seed in seeds:
     logging.info(f'======================= Run: {seeds.index(seed)} =================')
     set_seed(seed)
-
+    
+    if (args.tg_num == 475) or (args.tg_num == 478) or (args.tg_num == 486):
+        args.train_frac = 0.7
+        
     num_train = int(len(dataset) * args.train_frac)
     num_valid = int(len(dataset) * args.val_frac)
     num_test = len(dataset) - (num_train + num_valid)
