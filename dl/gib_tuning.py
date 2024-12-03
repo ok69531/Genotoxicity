@@ -66,7 +66,7 @@ sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
 
 def main():
     wandb.init()
-    wandb.run.name = f'tg{args.tg_num}-{args.optimizer}'
+    wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
     args.batch_size = wandb.config.batch_size
     args.optimizer = wandb.config.optimizer
