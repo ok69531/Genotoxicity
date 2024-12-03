@@ -44,12 +44,17 @@ except:
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
-dataset = GenoDataset(root = 'dataset', tg_num = 471)
-# for i in range(len(dataset)):
-#     if dataset[i].x.shape[0] == 1:
-#         print(i, dataset[i].x.shape)
+dataset = GenoDataset(root = 'dataset', tg_num = 478)
+for i in range(len(dataset)):
+    if dataset[i].x.shape[0] == 1:
+        print(i, dataset[i].x.shape)
 
-remove_idx = [1616, 2896]
+remove_idx = [1616, 2896] # 471
+remove_idx = [422, 1121, 1463, 1871, 1987, 2076] # 473
+remove_idx = [429, 1111, 1491, 1535, 1802, 2028] # 476
+remove_idx = [662, 1073, 1146, 1277] # 474
+remove_idx = [100] # 475
+
 
 avg_nodes = 0.0
 avg_edge_index = 0.0

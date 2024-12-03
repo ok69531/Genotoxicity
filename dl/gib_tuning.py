@@ -82,7 +82,16 @@ def main():
 
     dataset = GenoDataset(root = 'dataset', tg_num = args.tg_num)
 
-    remove_idx = [1616, 2896]
+    if args.tg_num == 471:
+        remove_idx = [1616, 2896]
+    elif args.tg_num == 473:
+        remove_idx = [422, 1121, 1463, 1871, 1987, 2076]
+    elif args.tg_num == 476:
+        remove_idx = [429, 1111, 1491, 1535, 1802, 2028]
+    elif args.tg_num == 474:
+        remove_idx = [662, 1073, 1146, 1277]
+    elif args.tg_num == 475:
+        remove_idx = [100]
 
     avg_nodes = 0.0
     avg_edge_index = 0.0
