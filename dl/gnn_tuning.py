@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
@@ -38,6 +38,8 @@ parser.add_argument('--hidden_dim', type = int, default = 128)
 parser.add_argument('--num_layers', type = int, default = 5)
 parser.add_argument('--lr', type = float, default = 0.001)
 parser.add_argument('--epochs', type = int, default = 100)
+parser.add_argument('--optimizer', type = str, default = 'adam')
+parser.add_argument('--weight_decay', type = float, default = 0)
 try:
     args = parser.parse_args()
 except:
@@ -46,7 +48,7 @@ except:
 
 wandb.login(key = open('wandb_key.txt', 'r').readline())
 sweep_configuration = {
-    'method': 'bayes',
+    'method': 'random',
     'name': 'sweep',
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
@@ -54,20 +56,25 @@ sweep_configuration = {
         'hidden_dim': {'values': [32, 64, 128, 300, 512]},
         'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
         'lr': {'values': [0.001, 0.003]},
-        'epochs': {'values': [100, 300]}
+        'epochs': {'values': [100, 300]},
+        'optimizer': {'values': ['adam', 'sgd']},
+        'weight_decay': {'values': [1e-4, 1e-5, 0]}
     }       
 }
-sweep_id = wandb.sweep(sweep_configuration, project = f'gnn_tg{args.tg_num}_genotoxicity')
+sweep_id = wandb.sweep(sweep_configuration, project = f'gnn_genotoxicity')
 
 
 def main():
     wandb.init()
+    wandb.run.name = f'tg{args.tg_num}-{args.optimizer}'
     
     args.batch_size = wandb.config.batch_size
     args.hidden_dim = wandb.config.hidden_dim
     args.num_layers = wandb.config.num_layers
     args.lr = wandb.config.lr
     args.epochs = wandb.config.epochs
+    args.optimizer = wandb.config.optimizer
+    args.weight_decay = wandb.config.weight_decay
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
@@ -111,7 +118,11 @@ def main():
     if args.model == 'gin':
         model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
         criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]).to(device))
-        optimizer = Adam(model.parameters(), lr = args.lr)
+    
+    if args.optimizer == 'adam':
+        optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+    elif args.optimzier == 'sgd':
+        optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
 
     best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
     final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0

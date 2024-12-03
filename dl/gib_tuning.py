@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
@@ -35,6 +35,8 @@ parser.add_argument('--target', type = str, default = 'maj', help = 'maj or cons
 parser.add_argument('--train_frac', type = float, default = 0.8)
 parser.add_argument('--val_frac', type = float, default = 0.1)
 parser.add_argument('--batch_size', type = int, default = 128)
+parser.add_argument('--optimizer', type = str, default = 'adam')
+parser.add_argument('--weight_decay', type = float, default = 0)
 try:
     args = parser.parse_args()
 except:
@@ -54,16 +56,22 @@ sweep_configuration = {
         'epochs': {'values': [100, 300]},
         'inner_loop': {'values': [50, 70, 100]},
         'beta': {'values': [0.1, 0.5, 0.9]},
-        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7]}
+        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7]},
+        'optimizer': {'values': ['adam', 'sgd']},
+        'weight_decay': {'values': [1e-4, 1e-5, 0]}
     }       
 }
-sweep_id = wandb.sweep(sweep_configuration, project = f'gib_tg{args.tg_num}_genotoxicity')
+sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
 
 
 def main():
     wandb.init()
+    wandb.run.name = f'tg{args.tg_num}-{args.optimizer}'
     
     args.batch_size = wandb.config.batch_size
+    args.optimizer = wandb.config.optimizer
+    args.weight_decay = wandb.config.weight_decay
+    
     gib_args.hidden = wandb.config.hidden_dim
     gib_args.num_layers = wandb.config.num_layers
     gib_args.lr = wandb.config.lr
@@ -122,8 +130,12 @@ def main():
     if args.model == 'gib':
         model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
         discriminator = Discriminator(gib_args.hidden).to(device)
-        optimizer = Adam(model.parameters(), lr = gib_args.lr)
-        optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr)
+        if args.optimizer == 'adam':
+            optimizer = Adam(model.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
+            optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
+        elif args.optimzier == 'sgd':
+            optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+            optimizer_local = SGD(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
 
     best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
     final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
