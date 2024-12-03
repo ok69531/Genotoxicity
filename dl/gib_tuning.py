@@ -133,7 +133,7 @@ def main():
         if args.optimizer == 'adam':
             optimizer = Adam(model.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
             optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
-        elif args.optimzier == 'sgd':
+        elif args.optimizer == 'sgd':
             optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
             optimizer_local = SGD(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
 

@@ -121,7 +121,7 @@ def main():
     
     if args.optimizer == 'adam':
         optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
-    elif args.optimzier == 'sgd':
+    elif args.optimizer == 'sgd':
         optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
 
     best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
