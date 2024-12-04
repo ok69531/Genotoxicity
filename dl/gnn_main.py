@@ -7,7 +7,7 @@ import numpy as np
 from copy import deepcopy
 
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
@@ -37,6 +37,8 @@ parser.add_argument('--hidden_dim', type = int, default = 128)
 parser.add_argument('--num_layers', type = int, default = 5)
 parser.add_argument('--lr', type = float, default = 0.001)
 parser.add_argument('--epochs', type = int, default = 100)
+parser.add_argument('--optimizer', type = str, default = 'adam')
+parser.add_argument('--weight_decay', type = float, default = 0)
 try:
     args = parser.parse_args()
 except:
@@ -47,7 +49,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
-    dataset = GenoDataset(root = 'dataset', tg_num = 471)
+    dataset = GenoDataset(root = 'dataset', tg_num = args.tg_num)
 
     avg_nodes = 0.0
     avg_edge_index = 0.0
@@ -85,15 +87,14 @@ def main():
         val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, shuffle = False)
         test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
-
         if args.model == 'gin':
-            # args.num_layers = 2
-            # args.hidden_dim = 32
-            # args.lr = 0.001
-            # args.epochs = 300
             model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
             criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]).to(device))
-            optimizer = Adam(model.parameters(), lr = args.lr)
+        
+        if args.optimizer == 'adam':
+            optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+        elif args.optimizer == 'sgd':
+            optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
 
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
@@ -160,49 +161,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-#%%
-# args.num_layers = 4
-# args.hidden_dim = 128
-# args.lr = 0.003
-# args.epochs = 300
-# args.batch_size = 128
-# test f1: ${41.501}_{\pm 5.912}$
-# test precision: ${34.102}_{\pm 8.522}$
-# test recall: ${55.210}_{\pm 7.180}$
-# test accuracy: ${90.250}_{\pm 1.220}$
-# test roc-auc: ${80.969}_{\pm 3.648}$
-
-# args.num_layers = 2
-# args.hidden_dim = 64
-# args.lr = 0.001
-# args.epochs = 100
-# args.batch_size = 64
-# test f1: ${44.787}_{\pm 5.768}$
-# test precision: ${38.459}_{\pm 7.087}$
-# test recall: ${55.608}_{\pm 10.544}$
-# test accuracy: ${91.361}_{\pm 1.836}$
-# test roc-auc: ${82.911}_{\pm 6.169}$
-
-# args.num_layers = 4
-# args.hidden_dim = 128
-# args.lr = 0.003
-# args.epochs = 300
-# args.batch_size = 64
-# test f1: ${38.645}_{\pm 6.500}$
-# test precision: ${30.767}_{\pm 8.500}$
-# test recall: ${55.062}_{\pm 7.235}$
-# test accuracy: ${88.722}_{\pm 2.943}$
-# test roc-auc: ${81.200}_{\pm 5.085}$
-
-# args.num_layers = 3
-# args.hidden_dim = 32
-# args.lr = 0.003
-# args.epochs = 300
-# args.batch_size = 32
-# test f1: ${43.566}_{\pm 4.429}$
-# test precision: ${36.829}_{\pm 4.577}$
-# test recall: ${54.660}_{\pm 8.113}$
-# test accuracy: ${91.111}_{\pm 1.516}$
-# test roc-auc: ${81.671}_{\pm 5.588}$
