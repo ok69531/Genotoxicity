@@ -165,7 +165,9 @@ def main():
 
     wandb.log({
         'avg val f1': np.mean(val_f1s),
-        'avg test f1': np.mean(test_f1s)
+        'std val f1': np.std(val_f1s),
+        'avg test f1': np.mean(test_f1s),
+        'std test f1': np.std(val_f1s)
     })
 
     logging.info('')
