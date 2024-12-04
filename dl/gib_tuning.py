@@ -50,7 +50,7 @@ sweep_configuration = {
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
         'batch_size': {'values': [32, 64, 128]},
-        'hidden_dim': {'values': [32, 64, 128, 300]},
+        'hidden_dim': {'values': [32, 64, 128, 300, 512]},
         'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
         'lr': {'values': [0.001, 0.003]},
         'epochs': {'values': [100, 300]},
