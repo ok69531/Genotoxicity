@@ -73,6 +73,24 @@ sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
 
 def main():
     wandb.init()
+    
+    if args.tg_num == 471: tg_args = tg471_args
+    elif args.tg_num == 473: tg_args = tg473_args
+    elif args.tg_num == 474: tg_args = tg474_args
+    elif args.tg_num == 475: tg_args = tg475_args
+    elif args.tg_num == 476: tg_args = tg476_args
+    elif args.tg_num == 478: tg_args = tg478_args
+    elif args.tg_num == 487: tg_args = tg487_args
+    else: raise ValueError(f'TG {args.tg_num} not supported.')
+    
+    args.hidden_dim = tg_args.hidden
+    args.num_layers = tg_args.num_layers
+    args.batch_size = tg_args.btach_size
+    args.epochs = tg_args.epochs
+    args.optimizer = tg_args.optimizer
+    args.lr = tg_args.lr
+    args.weight_decay = tg_args.weight_decay
+    
     wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
     gib_args.beta = wandb.config.beta
@@ -113,23 +131,6 @@ def main():
     optim_params_list = []
 
     seeds = get_seed(args.tg_num)
-    
-    if args.tg_num == 471: tg_args = tg471_args
-    elif args.tg_num == 473: tg_args = tg473_args
-    elif args.tg_num == 474: tg_args = tg474_args
-    elif args.tg_num == 475: tg_args = tg475_args
-    elif args.tg_num == 476: tg_args = tg476_args
-    elif args.tg_num == 478: tg_args = tg478_args
-    elif args.tg_num == 487: tg_args = tg487_args
-    else: raise ValueError(f'TG {args.tg_num} not supported.')
-    
-    args.hidden_dim = tg_args.hidden
-    args.num_layers = tg_args.num_layers
-    args.batch_size = tg_args.btach_size
-    args.epochs = tg_args.epochs
-    args.optimizer = tg_args.optimizer
-    args.lr = tg_args.lr
-    args.weight_decay = tg_args.weight_decay
     
     for seed in seeds[:3]:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
