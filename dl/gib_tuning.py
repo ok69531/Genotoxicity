@@ -161,8 +161,8 @@ def main():
             test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
         if args.model == 'gib':
-            model = GIBGIN(dataset.num_classes, args.num_layers, args.hidden).to(device)
-            discriminator = Discriminator(args.hidden).to(device)
+            model = GIBGIN(dataset.num_classes, args.num_layers, args.hidden_dim).to(device)
+            discriminator = Discriminator(args.hidden_dim).to(device)
             if args.optimizer == 'adam':
                 optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
                 optimizer_local = Adam(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
