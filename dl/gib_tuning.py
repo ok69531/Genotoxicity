@@ -16,7 +16,7 @@ from module.utils import set_seed, get_seed
 import wandb
 
 # gib
-from arguments.gib_args import gib_args
+from arguments.model_args.gib_args import gib_args
 from gib_model.gib import (
     GIBGIN,
     Discriminator,

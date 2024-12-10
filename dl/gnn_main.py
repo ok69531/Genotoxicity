@@ -21,6 +21,16 @@ from gib_model.gin import (
     gin_evaluation
 )
 
+from arguments.data_args import (
+    tg471_args,
+    tg473_args,
+    tg474_args,
+    tg475_args,
+    tg476_args,
+    tg478_args,
+    tg487_args
+)
+
 warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
 
@@ -31,14 +41,7 @@ parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for G
 parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
 parser.add_argument('--train_frac', type = float, default = 0.8)
 parser.add_argument('--val_frac', type = float, default = 0.1)
-parser.add_argument('--batch_size', type = int, default = 128)
 parser.add_argument('--readout', type = str, default = 'max')
-parser.add_argument('--hidden_dim', type = int, default = 128)
-parser.add_argument('--num_layers', type = int, default = 5)
-parser.add_argument('--lr', type = float, default = 0.001)
-parser.add_argument('--epochs', type = int, default = 100)
-parser.add_argument('--optimizer', type = str, default = 'adam')
-parser.add_argument('--weight_decay', type = float, default = 0)
 try:
     args = parser.parse_args()
 except:
@@ -68,6 +71,23 @@ def main():
 
     seeds = get_seed(args.tg_num)
     
+    if args.tg_num == 471: tg_args = tg471_args
+    elif args.tg_num == 473: tg_args = tg473_args
+    elif args.tg_num == 474: tg_args = tg474_args
+    elif args.tg_num == 475: tg_args = tg475_args
+    elif args.tg_num == 476: tg_args = tg476_args
+    elif args.tg_num == 478: tg_args = tg478_args
+    elif args.tg_num == 487: tg_args = tg487_args
+    else: raise ValueError(f'TG {args.tg_num} not supported.')
+    
+    args.hidden_dim = tg_args.hidden
+    args.num_layers = tg_args.num_layers
+    args.batch_size = tg_args.btach_size
+    args.epochs = tg_args.epochs
+    args.optimizer = tg_args.optimizer
+    args.lr = tg_args.lr
+    args.weight_decay = tg_args.weight_decay
+    
     for seed in seeds:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
@@ -87,9 +107,9 @@ def main():
         val_loader = DataLoader(dataset[list(val_idx)], batch_size = args.batch_size, shuffle = False)
         test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
-        if args.model == 'gin':
-            model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
-            criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]).to(device))
+        # if args.model == 'gin':
+        model = GraphIsomorphismNetwork(dataset.num_classes, args).to(device)
+        criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([1., 10.]).to(device))
         
         if args.optimizer == 'adam':
             optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
@@ -100,10 +120,10 @@ def main():
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
 
         for epoch in range(1, args.epochs+1):
-            if args.model == 'gin':
-                train_loss, _ = gin_train(model, optimizer, device, train_loader, criterion, args)
-                val_loss, val_sub_metrics, _ = gin_evaluation(model, device, val_loader, criterion, args)
-                test_loss, test_sub_metrics, _ = gin_evaluation(model, device, test_loader, criterion, args)
+            # if args.model == 'gin':
+            train_loss, _ = gin_train(model, optimizer, device, train_loader, criterion, args)
+            val_loss, val_sub_metrics, _ = gin_evaluation(model, device, val_loader, criterion, args)
+            test_loss, test_sub_metrics, _ = gin_evaluation(model, device, test_loader, criterion, args)
 
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
@@ -119,9 +139,9 @@ def main():
                 final_test_f1 = test_sub_metrics['f1']; final_test_auc = test_sub_metrics['auc']
                 final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
                 
-                if args.model == 'gin':
-                    params = deepcopy(model.state_dict())
-                    optim_params = deepcopy(optimizer.state_dict())
+                # if args.model == 'gin':
+                params = deepcopy(model.state_dict())
+                optim_params = deepcopy(optimizer.state_dict())
                 
         val_losses.append(best_val_loss); test_losses.append(final_test_loss)
         val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)
