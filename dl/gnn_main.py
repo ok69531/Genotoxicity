@@ -49,6 +49,8 @@ except:
 
 
 def main():
+    logging.info('')
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
@@ -87,6 +89,8 @@ def main():
     args.optimizer = tg_args.optimizer
     args.lr = tg_args.lr
     args.weight_decay = tg_args.weight_decay
+    
+    logging.info(args)
     
     for seed in seeds:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
