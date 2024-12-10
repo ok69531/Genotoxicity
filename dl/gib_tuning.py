@@ -15,8 +15,18 @@ from module.utils import set_seed, get_seed
 
 import wandb
 
+from arguments.data_args import (
+    tg471_args,
+    tg473_args,
+    tg474_args,
+    tg475_args,
+    tg476_args,
+    tg478_args,
+    tg487_args
+)
+
 # gib
-from arguments.model_args.gib_args import gib_args
+from arguments.model_args import gib_args
 from gib_model.gib import (
     GIBGIN,
     Discriminator,
@@ -34,9 +44,6 @@ parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for G
 parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
 parser.add_argument('--train_frac', type = float, default = 0.8)
 parser.add_argument('--val_frac', type = float, default = 0.1)
-parser.add_argument('--batch_size', type = int, default = 128)
-parser.add_argument('--optimizer', type = str, default = 'adam')
-parser.add_argument('--weight_decay', type = float, default = 0)
 try:
     args = parser.parse_args()
 except:
@@ -49,16 +56,16 @@ sweep_configuration = {
     'name': 'sweep',
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
-        'batch_size': {'values': [32, 64, 128]},
-        'hidden_dim': {'values': [32, 64, 128, 300, 512]},
-        'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
-        'lr': {'values': [0.001, 0.003]},
-        'epochs': {'values': [100, 300]},
-        'inner_loop': {'values': [50, 70, 100]},
-        'beta': {'values': [0.1, 0.5, 0.9]},
-        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7]},
-        'optimizer': {'values': ['adam', 'sgd']},
-        'weight_decay': {'values': [1e-4, 1e-5, 0]}
+        # 'batch_size': {'values': [32, 64, 128]},
+        # 'hidden_dim': {'values': [32, 64, 128, 300, 512]},
+        # 'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
+        # 'lr': {'values': [0.001, 0.003]},
+        # 'epochs': {'values': [100, 300]},
+        'inner_loop': {'values': [30, 50, 70, 100]},
+        'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        # 'optimizer': {'values': ['adam', 'sgd']},
+        # 'weight_decay': {'values': [1e-4, 1e-5, 0]}
     }       
 }
 sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
@@ -66,17 +73,11 @@ sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
 
 def main():
     wandb.init()
-    
-    args.batch_size = wandb.config.batch_size
-    args.optimizer = wandb.config.optimizer
-    args.weight_decay = wandb.config.weight_decay
-    
     wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
-    gib_args.hidden = wandb.config.hidden_dim
-    gib_args.num_layers = wandb.config.num_layers
-    gib_args.lr = wandb.config.lr
-    gib_args.epochs = wandb.config.epochs
+    gib_args.beta = wandb.config.beta
+    gib_args.pp_weight = wandb.config.pp_weight
+    gib_args.inner_loop = wandb.config.inner_loop
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
@@ -113,7 +114,24 @@ def main():
 
     seeds = get_seed(args.tg_num)
     
-    for seed in seeds:
+    if args.tg_num == 471: tg_args = tg471_args
+    elif args.tg_num == 473: tg_args = tg473_args
+    elif args.tg_num == 474: tg_args = tg474_args
+    elif args.tg_num == 475: tg_args = tg475_args
+    elif args.tg_num == 476: tg_args = tg476_args
+    elif args.tg_num == 478: tg_args = tg478_args
+    elif args.tg_num == 487: tg_args = tg487_args
+    else: raise ValueError(f'TG {args.tg_num} not supported.')
+    
+    args.hidden_dim = tg_args.hidden
+    args.num_layers = tg_args.num_layers
+    args.batch_size = tg_args.btach_size
+    args.epochs = tg_args.epochs
+    args.optimizer = tg_args.optimizer
+    args.lr = tg_args.lr
+    args.weight_decay = tg_args.weight_decay
+    
+    for seed in seeds[:3]:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
 
@@ -142,19 +160,19 @@ def main():
             test_loader = DataLoader(dataset[list(test_idx)], batch_size = args.batch_size, shuffle = False)
 
         if args.model == 'gib':
-            model = GIBGIN(dataset.num_classes, gib_args.num_layers, gib_args.hidden).to(device)
-            discriminator = Discriminator(gib_args.hidden).to(device)
+            model = GIBGIN(dataset.num_classes, args.num_layers, args.hidden).to(device)
+            discriminator = Discriminator(args.hidden).to(device)
             if args.optimizer == 'adam':
-                optimizer = Adam(model.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
-                optimizer_local = Adam(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
+                optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+                optimizer_local = Adam(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
             elif args.optimizer == 'sgd':
-                optimizer = SGD(model.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
-                optimizer_local = SGD(discriminator.parameters(), lr = gib_args.lr, weight_decay = args.weight_decay)
+                optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+                optimizer_local = SGD(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
 
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
 
-        for epoch in range(1, gib_args.epochs+1):
+        for epoch in range(1, args.epochs+1):
             if args.model == 'gib':
                 train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, gib_args, args)
                 val_loss, val_sub_metrics, _ = gib_eval(model, device, val_loader, args)
@@ -205,4 +223,4 @@ def main():
     logging.info('test accuracy: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_accs) * 100, np.std(test_accs) * 100))
     logging.info('test roc-auc: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_aucs) * 100, np.std(test_aucs) * 100))
 
-wandb.agent(sweep_id = sweep_id, function = main, count = 300)
+wandb.agent(sweep_id = sweep_id, function = main, count = 500)

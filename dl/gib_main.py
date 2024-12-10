@@ -13,6 +13,16 @@ from torch_geometric.loader import DataLoader
 from module.load_dataset import GenoDataset
 from module.utils import set_seed, get_seed
 
+from arguments.data_args import (
+    tg471_args,
+    tg473_args,
+    tg474_args,
+    tg475_args,
+    tg476_args,
+    tg478_args,
+    tg487_args
+)
+
 # gib
 from arguments.model_args.gib_args import gib_args
 from gib_model.gib import (
@@ -32,8 +42,6 @@ parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for G
 parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
 parser.add_argument('--train_frac', type = float, default = 0.8)
 parser.add_argument('--val_frac', type = float, default = 0.1)
-parser.add_argument('--num_runs', type = int, default = 10)
-parser.add_argument('--batch_size', type = int, default = 128)
 try:
     args = parser.parse_args()
 except:
