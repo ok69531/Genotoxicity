@@ -132,7 +132,7 @@ def main():
 
     seeds = get_seed(args.tg_num)
     
-    for seed in seeds[:3]:
+    for seed in seeds:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
 
