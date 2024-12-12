@@ -156,8 +156,8 @@ def main():
         params_list.append(params); optim_params_list.append(optim_params)
 
     checkpoints = {
-        'params_dict': params,
-        'optim_dict': optim_params,
+        'params_dict': params_list,
+        'optim_dict': optim_params_list,
         'val_f1s': val_f1s,
         'test_f1s': test_f1s
     }
