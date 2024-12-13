@@ -7,7 +7,7 @@ import numpy as np
 from copy import deepcopy
 
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
@@ -115,7 +115,7 @@ def main():
     optim_params_list = []
 
     seeds = get_seed(args.tg_num)
-    seed = seeds[0]
+    
     for seed in seeds:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
@@ -144,8 +144,12 @@ def main():
         if args.model == 'gib':
             model = GIBGIN(dataset.num_classes, args.num_layers, args.hidden_dim).to(device)
             discriminator = Discriminator(args.hidden_dim).to(device)
-            optimizer = Adam(model.parameters(), lr = args.lr)
-            optimizer_local = Adam(discriminator.parameters(), lr = args.lr)
+            if args.optimizer == 'adam':
+                optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+                optimizer_local = Adam(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+            elif args.optimizer == 'sgd':
+                optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+                optimizer_local = SGD(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
 
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
