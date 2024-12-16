@@ -25,7 +25,7 @@ class VariationalGIB(nn.Module):
         super(VariationalGIB, self).__init__()
         
         self.args = args
-        self.hidden = args.hidden
+        self.hidden = args.hidden_dim
         self.drop_ratio = drop_ratio
         
         self.mseloss = nn.MSELoss()
@@ -38,7 +38,7 @@ class VariationalGIB(nn.Module):
         
         self.convs = nn.ModuleList()
         for i in range(self.args.num_layers):
-            self.convs.append(GINConv(self.args.hidden))
+            self.convs.append(GINConv(self.hidden))
 
         self.fully_connected_1 = nn.Linear(self.hidden, self.hidden)
         self.fully_connected_2 = nn.Linear(self.hidden, self.args.second_dense_neurons)
@@ -157,8 +157,8 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
         
         self.args = args
-        self.lin1 = nn.Linear(self.args.hidden, self.args.cls_hidden_dimensions)
-        self.lin2 = nn.Linear(self.args.cls_hidden_dimensions, num_class)
+        self.lin1 = nn.Linear(self.args.hidden_dim, self.args.hidden_dim)
+        self.lin2 = nn.Linear(self.args.hidden_dim, num_class)
         self.relu = nn.ReLU()
     
     def reset_parameters(self):
@@ -180,17 +180,20 @@ def vgib_train(model, classifier, optimizer, device, loader, args):
     
     for data in loader: 
         data = data.to(device)
-        num_graphs = len(data.y)
+        num_graphs = len(data.y_maj)
         
         embedding, noisy, active_node_index, pos_penalty, kl_loss, preserve_rate = model(data)
         features = noisy
-        labels = data.y
+        if args.target == 'maj':
+            labels = data.y_maj
+        elif args.target == 'consv':
+            labels = data.y_consv
         
         # features = torch.cat((embedding, noisy), dim = 0)
         # labels = torch.cat((data.y, data.y), dim = 0).to(device)
         
         pred = classifier(features)
-        cls_loss = F.nll_loss(pred, labels)
+        cls_loss = F.nll_loss(pred, labels, weight = torch.tensor([1., 10.]).to(device))
         mi_loss = kl_loss
         
         optimizer.zero_grad()
@@ -205,7 +208,7 @@ def vgib_train(model, classifier, optimizer, device, loader, args):
 
 
 @torch.no_grad()
-def vgib_eval(model, classifier, device, loader):
+def vgib_eval(model, classifier, device, loader, args):
     model.eval()
     
     loss = 0
@@ -219,12 +222,18 @@ def vgib_eval(model, classifier, device, loader):
         out = classifier(out)
         pred = out.max(1)[1]
         
-        y.append(data.y)
+        if args.target == 'maj':
+            y.append(data.y_maj)
+        elif args.target == 'consv':
+            y.append(data.y_consv)
         sub_preds.append(pred)
         # trivial_preds.append(trivial_pred)
         sub_pred_prob.append(out[:, 1])
         # trivial_pred_prob.append(trivial_out[:, 1])
-        loss += F.nll_loss(out, data.y.view(-1), reduction='sum').item()
+        if args.target == 'maj':
+            loss += F.nll_loss(out, data.y_maj.view(-1), reduction='sum').item()
+        elif args.target == 'consv':
+            loss += F.nll_loss(out, data.y_consv.view(-1), reduction='sum').item()
     
     y = torch.cat(y).cpu().numpy()
     sub_preds = torch.cat(sub_preds).cpu().numpy()

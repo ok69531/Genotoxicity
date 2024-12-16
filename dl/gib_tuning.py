@@ -1,3 +1,4 @@
+import wandb
 import logging
 import argparse
 import warnings
@@ -13,20 +14,9 @@ from torch_geometric.loader import DataLoader
 from module.load_dataset import GenoDataset
 from module.utils import set_seed, get_seed
 
-import wandb
-
-from arguments.data_args import (
-    tg471_args,
-    tg473_args,
-    tg474_args,
-    tg475_args,
-    tg476_args,
-    tg478_args,
-    tg487_args
-)
+from arguments.arguments import load_arguments
 
 # gib
-from arguments.model_args import gib_args
 from gib_model.gib import (
     GIBGIN,
     Discriminator,
@@ -34,20 +24,16 @@ from gib_model.gib import (
     gib_eval
 )
 
+# vgib
+from gib_model.vgib import (
+    VariationalGIB,
+    Classifier,
+    vgib_train,
+    vgib_eval
+)
+
 warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--model', type = str, default = 'gib', help = 'gib, vgib, pgib, gsat')
-parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
-parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
-parser.add_argument('--train_frac', type = float, default = 0.8)
-parser.add_argument('--val_frac', type = float, default = 0.1)
-try:
-    args = parser.parse_args()
-except:
-    args = parser.parse_args([])
 
 
 wandb.login(key = open('wandb_key.txt', 'r').readline())
@@ -70,32 +56,28 @@ sweep_configuration = {
 }
 sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type = str, default = 'gib', help = 'gib, vgib, pgib, gsat')
+parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
+parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
+parser.add_argument('--train_frac', type = float, default = 0.8)
+parser.add_argument('--val_frac', type = float, default = 0.1)
+
+temp_args, _ = parser.parse_known_args()
+args = load_arguments(parser, temp_args.tg_num, temp_args.model)
+
 
 def main():
     wandb.init()
-    
-    if args.tg_num == 471: tg_args = tg471_args
-    elif args.tg_num == 473: tg_args = tg473_args
-    elif args.tg_num == 474: tg_args = tg474_args
-    elif args.tg_num == 475: tg_args = tg475_args
-    elif args.tg_num == 476: tg_args = tg476_args
-    elif args.tg_num == 478: tg_args = tg478_args
-    elif args.tg_num == 487: tg_args = tg487_args
-    else: raise ValueError(f'TG {args.tg_num} not supported.')
-    
-    args.hidden_dim = tg_args.hidden
-    args.num_layers = tg_args.num_layers
-    args.batch_size = tg_args.btach_size
-    args.epochs = tg_args.epochs
-    args.optimizer = tg_args.optimizer
-    args.lr = tg_args.lr
-    args.weight_decay = tg_args.weight_decay
-    
     wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
-    gib_args.beta = wandb.config.beta
-    gib_args.pp_weight = wandb.config.pp_weight
-    gib_args.inner_loop = wandb.config.inner_loop
+    if args.model == 'gib':
+        args.beta = wandb.config.beta
+        args.pp_weight = wandb.config.pp_weight
+        args.inner_loop = wandb.config.inner_loop
+    elif args.model == 'vgib':
+        args.mi_weight = wandb.config.mi_weight
+        args.con_weight = wandb.config.con_weight
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
@@ -169,16 +151,27 @@ def main():
             elif args.optimizer == 'sgd':
                 optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
                 optimizer_local = SGD(discriminator.parameters(), lr = args.lr, weight_decay = args.weight_decay)
-
+        elif args.model == 'vgib':
+            model = VariationalGIB(args).to(device)
+            classifier = Classifier(args, dataset.num_classes).to(device)
+            if args.optimizer == 'adam':
+                optimizer = Adam(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+            elif args.optimizer == 'sgd':
+                optimizer = SGD(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+        
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
 
         for epoch in range(1, args.epochs+1):
             if args.model == 'gib':
-                train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, gib_args, args)
+                train_loss = gib_train(model, discriminator, optimizer, optimizer_local, device, train_loader, args)
                 val_loss, val_sub_metrics, _ = gib_eval(model, device, val_loader, args)
                 test_loss, test_sub_metrics, _ = gib_eval(model, device, test_loader, args)
-
+            elif args.model == 'vgib':
+                train_loss = vgib_train(model, classifier, optimizer, device, train_loader, args)
+                val_loss, val_sub_metrics, _ = vgib_eval(model, classifier, device, val_loader, args)
+                test_loss, test_sub_metrics, _ = vgib_eval(model, classifier, device, test_loader, args)
+    
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
                                 train_loss, val_loss, val_sub_metrics['auc'], val_sub_metrics['f1'],
@@ -193,9 +186,9 @@ def main():
                 final_test_f1 = test_sub_metrics['f1']; final_test_auc = test_sub_metrics['auc']
                 final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
                 
-                if args.model == 'gib':
-                    params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
-                    optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
+                # if args.model == 'gib':
+                #     params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
+                #     optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
                 
         val_losses.append(best_val_loss); test_losses.append(final_test_loss)
         val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)
@@ -203,7 +196,7 @@ def main():
         val_accs.append(best_val_acc); test_accs.append(final_test_acc)
         val_precs.append(best_val_prec); test_precs.append(final_test_prec)
         val_recs.append(best_val_rec); test_recs.append(final_test_rec)
-        params_list.append(params); optim_params_list.append(optim_params)
+        # params_list.append(params); optim_params_list.append(optim_params)
 
     wandb.log({
         'avg val f1': np.mean(val_f1s),

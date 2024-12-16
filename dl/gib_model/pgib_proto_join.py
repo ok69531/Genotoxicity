@@ -1,9 +1,9 @@
 import torch
 import numpy as np
-from .pgib_configures import model_args
+# from .pgib_configures import model_args
 
 
-def join_prototypes_by_activations(model, p, test_loader, device, cont):
+def join_prototypes_by_activations(model, p, test_loader, device, cont, model_args):
  
     for idx, search_batch_input in enumerate(test_loader):
         search_batch = search_batch_input 
@@ -68,13 +68,13 @@ def join_prototypes_by_activations(model, p, test_loader, device, cont):
                 model.model.prototype_class_identity[[dist_iterator, *to_join], :].max(0)[0] 
 
 
-            left_proto = np.setdiff1d(np.arange(model.model.last_layer.weight.data.shape[1]-model_args.latent_dim[2]), to_join) 
+            left_proto = np.setdiff1d(np.arange(model.model.last_layer.weight.data.shape[1]-model_args.hidden_dim), to_join) 
             joined = protos_[to_join] 
             protos_ = protos_[left_proto] 
             proto_joined.append([dist_iterator, joined]) 
             with torch.no_grad():
                 last_layer = np.arange(model.model.last_layer.weight.data.shape[1])
-                left_last_layer = np.concatenate((left_proto, last_layer[-model_args.latent_dim[2]:]))
+                left_last_layer = np.concatenate((left_proto, last_layer[-model_args.hidden_dim:]))
                 model.model.last_layer.weight = torch.nn.Parameter(model.model.last_layer.weight[:, left_last_layer])
                 model.model.prototype_class_identity = model.model.prototype_class_identity[left_proto]
                 model.model.prototype_vectors = torch.nn.Parameter(model.model.prototype_vectors[left_proto])

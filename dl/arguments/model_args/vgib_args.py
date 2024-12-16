@@ -1,17 +1,11 @@
 class VGIBParser():
-    def __init__(self):
+    def __init__(self, mi_weight = None, con_weight = None):
         super().__init__()
         
-        self.num_layers = 3
-        self.epochs = 100
-        self.hidden = 128
         self.second_dense_neurons = 2
-        self.cls_hidden_dimensions = 64
-        self.mi_weight = 10
-        # self.mi_weight = 0.1
-        self.con_weight = 3
-        self.lr = 0.001
-        self.weight_decay = 5*10**-5
+        
+        self.mi_weight = mi_weight
+        self.con_weight = con_weight
 
 
 vgib_args = VGIBParser()

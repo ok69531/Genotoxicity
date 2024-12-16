@@ -45,9 +45,9 @@ class GINNet(nn.Module):
         self.args = args
         self.cont = cont
         self.output_dim = output_dim
-        self.latent_dim = args.latent_dim
-        self.num_gnn_layers = len(self.latent_dim)
-        self.dense_dim = self.latent_dim[-1]
+        self.latent_dim = args.hidden_dim
+        self.num_gnn_layers = args.num_layers
+        self.dense_dim = self.hidden_dim
         self.num_prototypes_per_class = args.num_prototypes_per_class
         
         self.readout_layers = get_readout_layers(args.readout)
@@ -56,22 +56,22 @@ class GINNet(nn.Module):
         
         self.gnn_layers = nn.ModuleList()
         for _ in range(self.num_gnn_layers):
-            self.gnn_layers.append(GINConv(self.latent_dim[0]))
+            self.gnn_layers.append(GINConv(self.latent_dim))
 
-        self.fully_connected_1 = nn.Linear(self.latent_dim[2], self.latent_dim[2])
-        self.fully_connected_2 = nn.Linear(self.latent_dim[2], 2)
+        self.fully_connected_1 = nn.Linear(self.latent_dim, self.latent_dim)
+        self.fully_connected_2 = nn.Linear(self.latent_dim, 2)
 
         self.softmax = nn.Softmax(dim = -1)
 
         # prototype layers
         self.epsilon = 1e-4
-        self.prototype_shape = (output_dim * self.num_prototypes_per_class, self.latent_dim[2])
+        self.prototype_shape = (output_dim * self.num_prototypes_per_class, self.latent_dim)
         self.prototype_vectors = nn.Parameter(torch.rand(self.prototype_shape, requires_grad = True))
         self.num_prototypes = self.prototype_shape[0]
-        self.prototype_predictor = nn.Linear(self.latent_dim[2], self.num_prototypes * self.latent_dim[2], bias = False)
+        self.prototype_predictor = nn.Linear(self.latent_dim, self.num_prototypes * self.latent_dim, bias = False)
         self.mse_loss = nn.MSELoss()
 
-        self.last_layer = nn.Linear(self.latent_dim[2] + self.num_prototypes, output_dim, bias = False)
+        self.last_layer = nn.Linear(self.latent_dim + self.num_prototypes, output_dim, bias = False)
 
         assert (self.num_prototypes % output_dim == 0)
 

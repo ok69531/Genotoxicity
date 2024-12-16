@@ -2,9 +2,9 @@ class TG487Parser():
     def __init__(self):
         super().__init__()
         
-        self.btach_size = 64
+        self.batch_size = 64
         self.num_layers = 6
-        self.hidden = 64
+        self.hidden_dim = 64
         self.epochs = 300
         self.lr = 0.001
         self.optimizer = 'adam'

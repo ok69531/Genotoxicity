@@ -163,7 +163,7 @@ class Discriminator(nn.Module):
         return pre
 
 
-def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, gib_args, args):
+def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, args):
     model.train()
     
     total_loss = 0
@@ -173,7 +173,7 @@ def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, 
         out, trivial_out, all_sub_embedding, all_graph_embedding, active_node_index, all_con_penalty = model(data)
         
         # to find phi_2^*
-        for j in range(0, gib_args.inner_loop):
+        for j in range(0, args.inner_loop):
             local_optimizer.zero_grad()
             local_loss = -MI_Est(discriminator, all_graph_embedding.detach(), all_sub_embedding.detach())
             local_loss.backward()
@@ -187,7 +187,7 @@ def gib_train(model, discriminator, optimizer, local_optimizer, device, loader, 
         elif args.target == 'consv':
             cls_loss = F.nll_loss(out, data.y_consv.view(-1), weight = torch.tensor([1., 10.]).to(device))
         mi_loss = MI_Est(discriminator, all_graph_embedding, all_sub_embedding)
-        loss = (1 - gib_args.pp_weight) * (cls_loss + gib_args.beta * mi_loss) + gib_args.pp_weight * all_con_penalty
+        loss = (1 - args.pp_weight) * (cls_loss + args.beta * mi_loss) + args.pp_weight * all_con_penalty
         
         loss.backward()
         total_loss += loss.item() * num_graphs(data)
