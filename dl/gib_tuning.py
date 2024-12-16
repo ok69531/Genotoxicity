@@ -36,6 +36,17 @@ warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type = str, default = 'gib', help = 'gib, vgib, pgib, gsat')
+parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
+parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
+parser.add_argument('--train_frac', type = float, default = 0.8)
+parser.add_argument('--val_frac', type = float, default = 0.1)
+
+temp_args, _ = parser.parse_known_args()
+args = load_arguments(parser, temp_args.tg_num, temp_args.model)
+
+
 wandb.login(key = open('wandb_key.txt', 'r').readline())
 sweep_configuration = {
     'method': 'random',
@@ -47,25 +58,16 @@ sweep_configuration = {
         # 'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
         # 'lr': {'values': [0.001, 0.003]},
         # 'epochs': {'values': [100, 300]},
-        'inner_loop': {'values': [30, 50, 70, 100]},
-        'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
-        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        # 'inner_loop': {'values': [30, 50, 70, 100]},
+        # 'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        # 'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
         # 'optimizer': {'values': ['adam', 'sgd']},
         # 'weight_decay': {'values': [1e-4, 1e-5, 0]}
+        'mi_weight': {'values': [0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]},
+        'con_weight': {'values': [0.1, 1, 3, 5, 7, 9, 10, 13, 15]}
     }       
 }
-sweep_id = wandb.sweep(sweep_configuration, project = f'gib_genotoxicity')
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--model', type = str, default = 'gib', help = 'gib, vgib, pgib, gsat')
-parser.add_argument('--tg_num', type = int, default = 471, help = 'OECD TG for Genotoxicity (471, 473, 476, 487 / 474, 475, 478, 483, 486, 488)')
-parser.add_argument('--target', type = str, default = 'maj', help = 'maj or consv')
-parser.add_argument('--train_frac', type = float, default = 0.8)
-parser.add_argument('--val_frac', type = float, default = 0.1)
-
-temp_args, _ = parser.parse_known_args()
-args = load_arguments(parser, temp_args.tg_num, temp_args.model)
-
+sweep_id = wandb.sweep(sweep_configuration, project = f'{args.model}_genotoxicity')
 
 def main():
     wandb.init()
