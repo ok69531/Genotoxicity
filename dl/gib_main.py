@@ -71,15 +71,22 @@ def main():
     args.weight_decay = tg_args.weight_decay
     
     if args.tg_num == 471:
-        gib_args.inner_loop = 70; gib_args.beta = 0.3; gib_args.pp_weight = 0.5
+        gib_args.inner_loop = 100; gib_args.beta = 0.5; gib_args.pp_weight = 0.3
     elif args.tg_num == 473:
         gib_args.inner_loop = 70; gib_args.beta = 0.1; gib_args.pp_weight = 0.1
     elif args.tg_num == 476:
+        gib_args.inner_loop = 50; gib_args.beta = 0.3; gib_args.pp_weight = 0.9
+    elif args.tg_num == 487:
         gib_args.inner_loop = 30; gib_args.beta = 0.1; gib_args.pp_weight = 0.9
     elif args.tg_num == 474:
-        gib_args.inner_loop = 50; gib_args.beta = 0.7; gib_args.pp_weight = 0.9
-    
+        gib_args.inner_loop = 100; gib_args.beta = 0.1; gib_args.pp_weight = 0.9
+    elif args.tg_num == 475:
+        gib_args.inner_loop = 50; gib_args.beta = 0.1; gib_args.pp_weight = 0.5
+    elif args.tg_num == 478:
+        gib_args.inner_loop = 50; gib_args.beta = 0.1; gib_args.pp_weight = 0.5
+    else: raise ValueError(f'TG {args.tg_num} not supported.')
     logging.info(args)
+    logging.info(gib_args)
     
     dataset = GenoDataset(root = 'dataset', tg_num = args.tg_num)
     for i in range(len(dataset)):
