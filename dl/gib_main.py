@@ -91,6 +91,9 @@ def main():
     for seed in seeds:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
+        
+        if (args.tg_num == 475) or (args.tg_num == 478) or (args.tg_num == 486):
+            args.train_frac = 0.7
 
         num_train = int(len(dataset) * args.train_frac)
         num_valid = int(len(dataset) * args.val_frac)

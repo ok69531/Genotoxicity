@@ -33,7 +33,7 @@ def load_arguments(parser, tg_num: int, model: str):
     if tg_num == 471:
         add_arguments_from_class(parser, tg471_args)
         if model == 'gib':
-            gib_args.beta = 0.5; gib_args.pp_weight = 0.3; gib_args.inner_loop = 100
+            gib_args.inner_loop = 100; gib_args.beta = 0.3; gib_args.pp_weight = 0.5
             add_arguments_from_class(parser, gib_args)
         elif model == 'vgib':
             vgib_args.mi_weight = 0.; vgib_args.con_weight = 0.
@@ -69,7 +69,7 @@ def load_arguments(parser, tg_num: int, model: str):
     elif tg_num == 474:
         add_arguments_from_class(parser, tg474_args)
         if model == 'gib':
-            gib_args.inner_loop = 100; gib_args.beta = 0.1; gib_args.pp_weight = 0.9
+            gib_args.inner_loop = 50; gib_args.beta = 0.1; gib_args.pp_weight = 0.9
             add_arguments_from_class(parser, gib_args)
         elif model == 'vgib':
             vgib_args.mi_weight = 0.; vgib_args.con_weight = 0.
@@ -105,7 +105,7 @@ def load_arguments(parser, tg_num: int, model: str):
     elif tg_num == 476:
         add_arguments_from_class(parser, tg476_args)
         if model == 'gib':
-            gib_args.inner_loop = 50; gib_args.beta = 0.3; gib_args.pp_weight = 0.9
+            gib_args.inner_loop = 70; gib_args.beta = 0.1; gib_args.pp_weight = 0.7
             add_arguments_from_class(parser, gib_args)
         elif model == 'vgib':
             vgib_args.mi_weight = 0.; vgib_args.con_weight = 0.
@@ -141,7 +141,7 @@ def load_arguments(parser, tg_num: int, model: str):
     elif tg_num == 487:
         add_arguments_from_class(parser, tg487_args)
         if model == 'gib':
-            gib_args.inner_loop = 30; gib_args.beta = 0.1; gib_args.pp_weight = 0.9
+            gib_args.inner_loop = 50; gib_args.beta = 0.1; gib_args.pp_weight = 0.7
             add_arguments_from_class(parser, gib_args)
         elif model == 'vgib':
             vgib_args.mi_weight = 0.; vgib_args.con_weight = 0.
