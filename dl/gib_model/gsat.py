@@ -32,9 +32,9 @@ class GIN(nn.Module):
         self.relu = nn.ReLU()
         self.pool = global_add_pool
         
-        self.hidden_size = args.hidden_size
+        self.hidden_size = args.hidden_dim
         self.dropout_p = args.dropout_p
-        self.n_layers = args.n_layers
+        self.n_layers = args.num_layers
         self.multi_label = args.multi_label
 
         self.atom_encoder = AtomEncoder(emb_dim = self.hidden_size)
@@ -113,7 +113,7 @@ class ExtractorMLP(nn.Module):
     def __init__(self, shared_config):
         super(ExtractorMLP, self).__init__()
         
-        self.hidden_size = shared_config.hidden_size
+        self.hidden_size = shared_config.hidden_dim
         self.learn_edge_att = shared_config.learn_edge_att
         self.dropout_p = shared_config.extractor_dropout_p
         
@@ -212,7 +212,10 @@ class GSAT(nn.Module):
         if self.num_class > 2:
             loss, loss_dict = self.__loss__(att, clf_logits, data.y, epoch)
         else:
-            loss, loss_dict = self.__loss__(att, clf_logits, data.y.view(clf_logits.shape), epoch)
+            if self.args.target == 'maj':
+                loss, loss_dict = self.__loss__(att, clf_logits, data.y_maj.view(clf_logits.shape), epoch)
+            elif self.args.target == 'consv':
+                loss, loss_dict = self.__loss__(att, clf_logits, data.y_consv.view(clf_logits.shape), epoch)
 
         return edge_att, loss, loss_dict, clf_logits
     
@@ -292,7 +295,10 @@ def run_one_epoch(model, data_loader, epoch, phase, device, gsat_args):
             all_loss_dict[k] = all_loss_dict.get(k, 0) + v
         
         # all_exp_labels.append(exp_labels), all_att.append(att)
-        all_clf_labels.append(data.y.data.cpu().view(len(data.y), -1)) 
+        if gsat_args.target == 'maj':
+            all_clf_labels.append(data.y_maj.data.cpu().view(len(data.y_maj), -1)) 
+        elif gsat_args.target == 'consv':
+            all_clf_labels.append(data.y_consv.data.cpu().view(len(data.y_consv), -1)) 
         all_clf_logits.append(clf_logits)
 
         if idx == loader_len - 1:

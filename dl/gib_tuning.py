@@ -32,6 +32,14 @@ from gib_model.vgib import (
     vgib_eval
 )
 
+# gsat
+from gib_model.gsat import (
+    GSAT,
+    GIN,
+    ExtractorMLP,
+    run_one_epoch
+)
+
 warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
 
@@ -63,8 +71,13 @@ sweep_configuration = {
         # 'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
         # 'optimizer': {'values': ['adam', 'sgd']},
         # 'weight_decay': {'values': [1e-4, 1e-5, 0]}
-        'mi_weight': {'values': [0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]},
-        'con_weight': {'values': [0.1, 1, 3, 5, 7, 9, 10, 13, 15]}
+        
+        # 'mi_weight': {'values': [0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]},
+        # 'con_weight': {'values': [0.1, 1, 3, 5, 7, 9, 10, 13, 15]}
+        
+        'fix_r': {'values': [True, False]},
+        'final_r': {'values': [0.3, 0.5, 0.6, 0.7]},
+        'decay_interval': {'values': [5, 10, 15, 20, 25]}
     }       
 }
 sweep_id = wandb.sweep(sweep_configuration, project = f'{args.model}_genotoxicity')
@@ -80,8 +93,13 @@ def main():
     elif args.model == 'vgib':
         args.mi_weight = wandb.config.mi_weight
         args.con_weight = wandb.config.con_weight
+    elif args.model == 'gsat':
+        args.fix_r = wandb.config.fix_r
+        args.final_r = wandb.config.final_r
+        args.decay_interval = wandb.config.decay_interval
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     logging.info(f'Cuda Available: {torch.cuda.is_available()}, {device}')
 
     dataset = GenoDataset(root = 'dataset', tg_num = args.tg_num)
@@ -116,7 +134,7 @@ def main():
 
     seeds = get_seed(args.tg_num)
     
-    for seed in seeds:
+    for seed in seeds[:3]:
         logging.info(f'======================= Run: {seeds.index(seed)} =================')
         set_seed(seed)
 
@@ -160,6 +178,14 @@ def main():
                 optimizer = Adam(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
             elif args.optimizer == 'sgd':
                 optimizer = SGD(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+        elif args.model == 'gsat':
+            gnn = GIN(dataset.num_classes, args).to(device)
+            extractor = ExtractorMLP(args).to(device)
+            if args.optimizer == 'adam':
+                optimizer = Adam(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+            elif args.optimizer == 'sgd':
+                optimizer = SGD(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+            model = GSAT(gnn, extractor, optimizer, device, dataset.num_classes, args)
         
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
@@ -173,6 +199,10 @@ def main():
                 train_loss = vgib_train(model, classifier, optimizer, device, train_loader, args)
                 val_loss, val_sub_metrics, _ = vgib_eval(model, classifier, device, val_loader, args)
                 test_loss, test_sub_metrics, _ = vgib_eval(model, classifier, device, test_loader, args)
+            elif args.model == 'gsat':
+                train_loss, _, _ = run_one_epoch(model, train_loader, epoch, 'train', device, args)
+                val_loss, val_sub_metrics, _ = run_one_epoch(model, val_loader, epoch, 'valid', device, args)
+                test_loss, test_sub_metrics, _ = run_one_epoch(model, test_loader, epoch, 'test', device, args)
     
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(

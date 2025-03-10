@@ -10,11 +10,11 @@ class GSATParser():
         
         self.pred_loss_coef = pred_loss_coef
         self.info_loss_coef = info_loss_coef
-        self.fix_r = fix_r
-        self.decay_r = decay_r
-        self.decay_interval = decay_interval
-        self.final_r = final_r
-        self.init_r = init_r
+        self.fix_r = False
+        self.decay_r = 0.1
+        self.decay_interval = 10
+        self.final_r = 0.5
+        self.init_r = 0.9
 
 
 gsat_args = GSATParser()
