@@ -61,29 +61,37 @@ sweep_configuration = {
     'name': 'sweep',
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
-        # 'batch_size': {'values': [32, 64, 128]},
-        # 'hidden_dim': {'values': [32, 64, 128, 300, 512]},
-        # 'num_layers': {'values': [2, 3, 4, 5, 6, 7]},
-        # 'lr': {'values': [0.001, 0.003]},
         # 'epochs': {'values': [100, 300]},
-        # 'inner_loop': {'values': [30, 50, 70, 100]},
-        # 'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
-        # 'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
-        # 'optimizer': {'values': ['adam', 'sgd']},
-        # 'weight_decay': {'values': [1e-4, 1e-5, 0]}
+        # 'batch_size': {'values': [32, 64, 128]},
+        'hidden_dim': {'values': [32, 64, 128, 256, 512]},
+        'num_layers': {'values': [2, 3, 4, 5]},
+        'lr': {'values': [0.001, 0.005]},
+        'optimizer': {'values': ['adam', 'sgd']},
+        'weight_decay': {'values': [1e-4, 1e-5, 0]},
+        
+        'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        'inner_loop': {'values': [30, 50, 70, 100]},
+        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
         
         # 'mi_weight': {'values': [0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]},
         # 'con_weight': {'values': [0.1, 1, 3, 5, 7, 9, 10, 13, 15]}
         
-        'fix_r': {'values': [True, False]},
-        'final_r': {'values': [0.3, 0.5, 0.6, 0.7]},
-        'decay_interval': {'values': [5, 10, 15, 20, 25]}
+        # 'fix_r': {'values': [True, False]},
+        # 'final_r': {'values': [0.3, 0.5, 0.6, 0.7]},
+        # 'decay_interval': {'values': [5, 10, 15, 20, 25]}
     }       
 }
 sweep_id = wandb.sweep(sweep_configuration, project = f'{args.model}_genotoxicity')
 
 def main():
     wandb.init()
+    
+    args.hidden_dim = wandb.config.hidden_dim
+    args.num_layers = wandb.config.num_layers
+    args.lr = wandb.config.lr
+    args.optimizer = wandb.config.optimizer
+    args.weight_decay = wandb.config.weight_decay
+    
     wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
     if args.model == 'gib':
@@ -209,8 +217,10 @@ def main():
                                 train_loss, val_loss, val_sub_metrics['auc'], val_sub_metrics['f1'],
                                 test_loss, test_sub_metrics['auc'], test_sub_metrics['f1']))
 
-            if (val_sub_metrics['f1'] > best_val_f1) or \
-                ((val_loss < best_val_loss) and (val_sub_metrics['f1'] == best_val_f1)):
+            if (val_sub_metrics['auc'] > best_val_auc) or \
+                ((val_loss < best_val_loss) and (val_sub_metrics['auc'] == best_val_auc)):
+            # if (val_sub_metrics['f1'] > best_val_f1) or \
+            #     ((val_loss < best_val_loss) and (val_sub_metrics['f1'] == best_val_f1)):
                 best_val_loss = val_loss
                 best_val_f1 = val_sub_metrics['f1']; best_val_auc = val_sub_metrics['auc']
                 best_val_acc = val_sub_metrics['accuracy']; best_val_prec = val_sub_metrics['precision']; best_val_rec = val_sub_metrics['recall']
@@ -234,7 +244,11 @@ def main():
         'avg val f1': np.mean(val_f1s),
         'std val f1': np.std(val_f1s),
         'avg test f1': np.mean(test_f1s),
-        'std test f1': np.std(val_f1s)
+        'std test f1': np.std(test_f1s),
+        'avg val auc': np.mean(val_aucs),
+        'std val auc': np.std(val_aucs),
+        'avg test auc': np.mean(test_aucs),
+        'std test auc': np.std(test_f1s)
     })
     
     logging.info('')
@@ -249,4 +263,4 @@ def main():
     logging.info('test accuracy: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_accs) * 100, np.std(test_accs) * 100))
     logging.info('test roc-auc: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_aucs) * 100, np.std(test_aucs) * 100))
 
-wandb.agent(sweep_id = sweep_id, function = main, count = 500)
+wandb.agent(sweep_id = sweep_id, function = main, count = 150)
