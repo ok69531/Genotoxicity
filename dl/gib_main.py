@@ -161,10 +161,10 @@ def main():
                 final_test_acc = test_sub_metrics['accuracy']; final_test_prec = test_sub_metrics['precision']; final_test_rec = test_sub_metrics['recall']
                 
                 if args.model == 'gib':
-                    params = (deepcopy(model.state_dict(), deepcopy(discriminator.state_dict())))
-                    optim_params = (deepcopy(optimizer.state_dict(), deepcopy(optimizer_local.state_dict())))
+                    params = (deepcopy(model.state_dict()), deepcopy(discriminator.state_dict()))
+                    optim_params = (deepcopy(optimizer.state_dict()), deepcopy(optimizer_local.state_dict()))
                 elif args.model == 'vgib':
-                    params = (deepcopy(model.state_dict(), deepcopy(classifier.state_dict())))
+                    params = (deepcopy(model.state_dict()), deepcopy(classifier.state_dict()))
                     optim_params = deepcopy(optimizer.state_dict())
                 
         val_losses.append(best_val_loss); test_losses.append(final_test_loss)
