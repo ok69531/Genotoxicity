@@ -16,3 +16,5 @@ wandb
 dl/dataset/
 wandb_key.txt
 tmp.py
+saved_result
+visualize

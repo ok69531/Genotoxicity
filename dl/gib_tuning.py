@@ -69,13 +69,16 @@ sweep_configuration = {
         'optimizer': {'values': ['adam', 'sgd']},
         'weight_decay': {'values': [1e-4, 1e-5, 0]},
         
-        'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
-        'inner_loop': {'values': [30, 50, 70, 100]},
-        'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        # gib
+        # 'beta': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
+        # 'inner_loop': {'values': [30, 50, 70, 100]},
+        # 'pp_weight': {'values': [0.1, 0.3, 0.5, 0.7, 0.9]},
         
+        # vgib
         # 'mi_weight': {'values': [0.0001, 0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]},
         # 'con_weight': {'values': [0.1, 1, 3, 5, 7, 9, 10, 13, 15]}
         
+        # gsat
         # 'fix_r': {'values': [True, False]},
         # 'final_r': {'values': [0.3, 0.5, 0.6, 0.7]},
         # 'decay_interval': {'values': [5, 10, 15, 20, 25]}
@@ -263,4 +266,4 @@ def main():
     logging.info('test accuracy: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_accs) * 100, np.std(test_accs) * 100))
     logging.info('test roc-auc: ${{{:.3f}}}_{{\\pm {:.3f}}}$'.format(np.mean(test_aucs) * 100, np.std(test_aucs) * 100))
 
-wandb.agent(sweep_id = sweep_id, function = main, count = 150)
+wandb.agent(sweep_id = sweep_id, function = main, count = 500)
