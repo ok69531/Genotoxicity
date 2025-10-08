@@ -40,6 +40,15 @@ from gib_model.gsat import (
     run_one_epoch
 )
 
+# pgib
+from gib_model.pgib import (
+    GnnNets,
+    pgib_train,
+    pgib_evaluate_GC
+)
+from gib_model.pgib_my_mcts import mcts
+from gib_model.pgib_proto_join import join_prototypes_by_activations
+
 warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
 
@@ -61,7 +70,7 @@ sweep_configuration = {
     'name': 'sweep',
     'metric': {'goal': 'maximize', 'name': 'avg val f1'},
     'parameters':{
-        # 'epochs': {'values': [100, 300]},
+        'epochs': {'values': [100, 300]},
         # 'batch_size': {'values': [32, 64, 128]},
         'hidden_dim': {'values': [32, 64, 128, 256, 512]},
         'num_layers': {'values': [2, 3, 4, 5]},
@@ -81,7 +90,15 @@ sweep_configuration = {
         # gsat
         # 'fix_r': {'values': [True, False]},
         # 'final_r': {'values': [0.3, 0.4, 0.5, 0.6, 0.7]},
-        # 'decay_interval': {'values': [5, 10, 15, 20, 25, 30, 40, 50]}
+        # 'decay_interval': {'values': [5, 10, 15, 20, 25, 30, 40, 50]},
+        # 'pred_loss_coef': {'values': [0.001, 0.005, 0.01, 0.05, 0.1, 1]},
+        # 'info_loss_coef': {'values': [0.001, 0.005, 0.01, 0.05, 0.1, 1]},
+        
+        # pgib
+        # 'pp_weight': {'values': [0.1, 0.2, 0.3, 0.4, 0.5]},
+        # 'alpha1': {'values': [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]},
+        # 'alpha2': {'values': [0.001, 0.005, 0.01, 0.05, 0.1]},
+        # 'con_weight': {'values': [0.1, 0.5, 1, 3, 5, 7, 10]},
     }       
 }
 sweep_id = wandb.sweep(sweep_configuration, project = f'{args.model}_genotoxicity')
@@ -197,6 +214,13 @@ def main():
             elif args.optimizer == 'sgd':
                 optimizer = SGD(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
             model = GSAT(gnn, extractor, optimizer, device, dataset.num_classes, args)
+        elif args.model == 'pgib':
+            model = GnnNets(dataset.num_classes, args)
+            criterion = torch.nn.CrossEntropyLoss()
+            if args.optimizer == 'adam':
+                optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
+            elif args.optimizer == 'sgd':
+                optimizer = SGD(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
         
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
@@ -214,6 +238,40 @@ def main():
                 train_loss, _, _ = run_one_epoch(model, train_loader, epoch, 'train', device, args)
                 val_loss, val_sub_metrics, _ = run_one_epoch(model, val_loader, epoch, 'valid', device, args)
                 test_loss, test_sub_metrics, _ = run_one_epoch(model, test_loader, epoch, 'test', device, args)
+            elif args.model == 'pgib':
+                if epoch >= args.proj_epochs and epoch % 50 == 0:
+                    model.eval()
+                    
+                    for i in range(model.model.prototype_vectors.shape[0]):
+                        count = 0
+                        best_similarity = 0
+                        label = model.model.prototype_class_identity[0].max(0)[1]
+                        # label = model.prototype_class_identity[i].max(0)[1]
+                        
+                        for j in range(i*10, len(train_idx)):
+                            data = dataset[train_idx[j]]
+                            if data.y == label:
+                                count += 1
+                                coalition, similarity, prot = mcts(data, model, model.model.prototype_vectors[i])
+                                model.to(device)
+                                if similarity > best_similarity:
+                                    best_similarity = similarity
+                                    proj_prot = prot
+                            
+                            if count >= args.count:
+                                model.model.prototype_vectors.data[i] = proj_prot.to(device)
+                                logging.info('Projection of prototype completed')
+                                break
+
+                    # prototype merge
+                    share = True
+                    if share: 
+                        if model.model.prototype_vectors.shape[0] > round(dataset.num_classes * args.num_prototypes_per_class * (1-args.merge_p)) :  
+                            join_info = join_prototypes_by_activations(model, args.proto_percnetile, train_loader, device, cont = True, model_args = args)
+
+                train_loss, _, _ = pgib_train(model, optimizer, device, train_loader, criterion, epoch, args, cont = True)
+                val_loss, val_sub_metrics, _ = pgib_evaluate_GC(val_loader, model, device, criterion)
+                test_loss, test_sub_metrics, _ = pgib_evaluate_GC(test_loader, model, device, criterion)
     
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
