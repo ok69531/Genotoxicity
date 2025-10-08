@@ -125,6 +125,13 @@ def main():
         args.fix_r = wandb.config.fix_r
         args.final_r = wandb.config.final_r
         args.decay_interval = wandb.config.decay_interval
+        args.pred_loss_coef = wandb.config.pred_loss_coef
+        args.info_loss_coef = wandb.config.info_loss_coef
+    elif args.model == 'pgib':
+        args.pp_weight = wandb.config.pp_weight
+        args.alpha1 = wandb.config.alpha1
+        args.alpha2 = wandb.config.alpha2
+        args.con_weight = wandb.config.con_weight
     
     device = torch.device('cpu')
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
