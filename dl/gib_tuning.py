@@ -222,7 +222,7 @@ def main():
                 optimizer = SGD(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
             model = GSAT(gnn, extractor, optimizer, device, dataset.num_classes, args)
         elif args.model == 'pgib':
-            model = GnnNets(dataset.num_classes, args)
+            model = GnnNets(dataset.num_classes, args, True)
             criterion = torch.nn.CrossEntropyLoss()
             if args.optimizer == 'adam':
                 optimizer = Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
