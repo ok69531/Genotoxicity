@@ -297,7 +297,10 @@ def pgib_train(model, optimizer, device, loader, criterion, epoch, args, cont):
             cls_loss = criterion(logits, batch.y_consv)
         
         if cont:
-            prototypes_of_correct_class = torch.t(model.model.prototype_class_identity.to(device)[:, batch.y])
+            if args.target == 'maj':
+                prototypes_of_correct_class = torch.t(model.model.prototype_class_identity.to(device)[:, batch.y_maj])
+            elif args.target == 'consv':
+                prototypes_of_correct_class = torch.t(model.model.prototype_class_identity.to(device)[:, batch.y_consv])
             prototypes_of_wrong_class = 1 - prototypes_of_correct_class
             positive_sim_matrix = sim_matrix * prototypes_of_correct_class
             negative_sim_matrix = sim_matrix * prototypes_of_wrong_class
@@ -390,34 +393,34 @@ def pgib_evaluate_GC(loader, model, device, criterion, args):
     return loss, subgraph_metric, {}
 
 
-@torch.no_grad()
-def pgib_test_GC(loader, model, device, criterion):
-    model.eval()
+# @torch.no_grad()
+# def pgib_test_GC(loader, model, device, criterion):
+#     model.eval()
     
-    acc = []
-    loss_list = []
-    pred_probs = []
-    predictions = []
+#     acc = []
+#     loss_list = []
+#     pred_probs = []
+#     predictions = []
     
-    with torch.no_grad():
-        for _, batch in enumerate(loader):
-            batch = batch.to(device)
-            logits, probs, active_node_index, _, _, _, _, _ = model(batch)
-            loss = criterion(logits, batch.y)
+#     with torch.no_grad():
+#         for _, batch in enumerate(loader):
+#             batch = batch.to(device)
+#             logits, probs, active_node_index, _, _, _, _, _ = model(batch)
+#             loss = criterion(logits, batch.y)
             
-            # record
-            _, prediction = torch.max(logits, -1)
-            loss_list.append(loss.item())
-            acc.append(prediction.eq(batch.y).cpu().numpy())
-            predictions.append(prediction)
-            pred_probs.append(probs)
+#             # record
+#             _, prediction = torch.max(logits, -1)
+#             loss_list.append(loss.item())
+#             acc.append(prediction.eq(batch.y).cpu().numpy())
+#             predictions.append(prediction)
+#             pred_probs.append(probs)
     
-    test_state = {
-        'loss': np.average(loss_list),
-        'acc': np.average(np.concatenate(acc, axis=0).mean())
-    }
+#     test_state = {
+#         'loss': np.average(loss_list),
+#         'acc': np.average(np.concatenate(acc, axis=0).mean())
+#     }
     
-    pred_probs = torch.cat(pred_probs, dim=0).cpu().detach().numpy()
-    predictions = torch.cat(predictions, dim=0).cpu().detach().numpy()
+#     pred_probs = torch.cat(pred_probs, dim=0).cpu().detach().numpy()
+#     predictions = torch.cat(predictions, dim=0).cpu().detach().numpy()
     
-    return test_state, pred_probs, predictions
+#     return test_state, pred_probs, predictions
