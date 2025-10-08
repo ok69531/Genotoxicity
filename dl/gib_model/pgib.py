@@ -52,7 +52,7 @@ class GINNet(nn.Module):
         
         self.readout_layers = get_readout_layers(args.readout)
         
-        self.atom_encoder = AtomEncoder(emb_dim = self.latent_dim[0])
+        self.atom_encoder = AtomEncoder(emb_dim = self.latent_dim)
         
         self.gnn_layers = nn.ModuleList()
         for _ in range(self.num_gnn_layers):
