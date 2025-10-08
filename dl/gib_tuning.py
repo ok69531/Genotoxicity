@@ -258,7 +258,13 @@ def main():
                         
                         for j in range(i*10, len(train_idx)):
                             data = dataset[train_idx[j]]
-                            if data.y == label:
+                            
+                            if args.target == 'maj':
+                                y = data.y_maj
+                            elif args.target == 'consv':
+                                y = data.y_consv
+                            
+                            if y == label:
                                 count += 1
                                 coalition, similarity, prot = mcts(data, model, model.model.prototype_vectors[i])
                                 model.to(device)
