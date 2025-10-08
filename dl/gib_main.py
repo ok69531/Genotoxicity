@@ -32,6 +32,13 @@ from gib_model.vgib import (
     vgib_eval
 )
 
+# gsat
+from gib_model.gsat import (
+    GSAT, 
+    GIN, 
+    ExtractorMLP,
+    run_one_epoch
+)
 
 warnings.filterwarnings('ignore')
 logging.basicConfig(format = '', level = logging.INFO)
@@ -132,6 +139,14 @@ def main():
                 optimizer = Adam(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
             elif args.optimizer == 'sgd':
                 optimizer = SGD(list(model.parameters()) + list(classifier.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+        elif args.model == 'gsat':
+            gnn = GIN(dataset.num_classes, args).to(device)
+            extractor = ExtractorMLP(args).to(device)
+            if args.optimizer == 'adam':
+                optimizer = Adam(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+            elif args.optimizer == 'sgd':
+                optimizer = SGD(list(gnn.parameters()) + list(extractor.parameters()), lr = args.lr, weight_decay = args.weight_decay)
+            model = GSAT(gnn, extractor, optimizer, device, dataset.num_classes, args)
             
         best_val_loss, best_val_auc, best_val_f1 = 100, 0, 0
         final_test_loss, final_test_auc, final_test_f1 = 100, 0, 0
@@ -145,6 +160,10 @@ def main():
                 train_loss = vgib_train(model, classifier, optimizer, device, train_loader, args)
                 val_loss, val_sub_metrics, _ = vgib_eval(model, classifier, device, val_loader, args)
                 test_loss, test_sub_metrics, _ = vgib_eval(model, classifier, device, test_loader, args)
+            elif args.model == 'gsat':
+                train_loss, _, _ = run_one_epoch(model, train_loader, epoch, 'train', device, args)
+                val_loss, val_sub_metrics, _ = run_one_epoch(model, val_loader, epoch, 'valid', device, args)
+                test_loss, test_sub_metrics, _ = run_one_epoch(model, test_loader, epoch, 'test', device, args)
     
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(
