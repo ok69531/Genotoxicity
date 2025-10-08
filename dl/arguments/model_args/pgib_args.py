@@ -11,6 +11,7 @@ class PGIBParser():
         self.num_prototypes_per_class = 7
         self.share = True
         
+        self.readout = 'max'
         self.pp_weight = pp_weight
         self.alpha1 = alpha1
         self.alpha2 = alpha2
