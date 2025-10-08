@@ -47,7 +47,7 @@ class GINNet(nn.Module):
         self.output_dim = output_dim
         self.latent_dim = args.hidden_dim
         self.num_gnn_layers = args.num_layers
-        self.dense_dim = self.hidden_dim
+        self.dense_dim = args.hidden_dim
         self.num_prototypes_per_class = args.num_prototypes_per_class
         
         self.readout_layers = get_readout_layers(args.readout)
