@@ -4,7 +4,7 @@ class PGIBParser():
         
         self.count = 1
         self.merge_p = 0.3
-        self.proj_epochs = 50
+        self.proj_epochs = 100
         self.proto_percnetile = 0.1
         self.early_stopping = 10000
         self.warm_epochs = 10
