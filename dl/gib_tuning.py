@@ -111,6 +111,7 @@ def main():
     args.lr = wandb.config.lr
     args.optimizer = wandb.config.optimizer
     args.weight_decay = wandb.config.weight_decay
+    args.epochs = wandb.config.epochs
     
     wandb.run.name = f'tg{args.tg_num}-{args.target}-{args.optimizer}'
     
