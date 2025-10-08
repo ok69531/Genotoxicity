@@ -277,8 +277,8 @@ def main():
                             join_info = join_prototypes_by_activations(model, args.proto_percnetile, train_loader, device, cont = True, model_args = args)
 
                 train_loss, _, _ = pgib_train(model, optimizer, device, train_loader, criterion, epoch, args, cont = True)
-                val_loss, val_sub_metrics, _ = pgib_evaluate_GC(val_loader, model, device, criterion)
-                test_loss, test_sub_metrics, _ = pgib_evaluate_GC(test_loader, model, device, criterion)
+                val_loss, val_sub_metrics, _ = pgib_evaluate_GC(val_loader, model, device, criterion, args)
+                test_loss, test_sub_metrics, _ = pgib_evaluate_GC(test_loader, model, device, criterion, args)
     
             logging.info('=== epoch: {}'.format(epoch))
             logging.info('Train loss: {:.5f} | Validation loss: {:.5f}, Auc: {:.5f}, F1: {:.5f} | Test loss: {:.5f}, Auc: {:.5f}, F1: {:.5f}'.format(

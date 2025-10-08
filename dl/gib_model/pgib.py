@@ -291,7 +291,10 @@ def pgib_train(model, optimizer, device, loader, criterion, epoch, args, cont):
         else:
             logits, probs, active_node_index, graph_emb, KL_Loss, connectivity_loss, prototype_pred_loss, _ = model(batch)
 
-        cls_loss = criterion(logits, batch.y)
+        if args.target == 'maj':
+            cls_loss = criterion(logits, batch.y_maj)
+        elif args.target == 'consv':
+            cls_loss = criterion(logits, batch.y_consv)
         
         if cont:
             prototypes_of_correct_class = torch.t(model.model.prototype_class_identity.to(device)[:, batch.y])
@@ -333,7 +336,10 @@ def pgib_train(model, optimizer, device, loader, criterion, epoch, args, cont):
         _, prediction = torch.max(logits, -1)
         loss_list.append(loss.item())
         ld_loss_list.append(ld.item())
-        acc.append(prediction.eq(batch.y).cpu().numpy())
+        if args.target == 'maj':
+            acc.append(prediction.eq(batch.y_maj).cpu().numpy())
+        elif args.target == 'consv':
+            acc.append(prediction.eq(batch.y_consv).cpu().numpy())
 
     # report train msg
     # print(f'Train Epoch: {epoch} | Loss: {np.average(loss_list):.3f} | Ld: {np.average(ld_loss_list):.3f} | '
@@ -343,7 +349,7 @@ def pgib_train(model, optimizer, device, loader, criterion, epoch, args, cont):
 
 
 @torch.no_grad()
-def pgib_evaluate_GC(loader, model, device, criterion):
+def pgib_evaluate_GC(loader, model, device, criterion, args):
     model.eval()
     
     loss_list = []
@@ -353,12 +359,18 @@ def pgib_evaluate_GC(loader, model, device, criterion):
     for batch in loader:
         batch = batch.to(device)
         logits, probs, _, _, _, _, _, _ = model(batch)
-        loss = criterion(logits, batch.y)
+        if args.target == 'maj':
+            loss = criterion(logits, batch.y_maj)
+        elif args.target == 'consv':
+            loss = criterion(logits, batch.y_consv)
         
         _, prediction = torch.max(logits, -1)
         loss_list.append(loss.item())
         
-        y.append(batch.y)
+        if args.target == 'maj':
+            y.append(batch.y_maj)
+        elif args.target == 'consv':
+            y.append(batch.y_consv)
         sub_preds.append(prediction)
         sub_pred_prob.append(probs[:, 1])
     
