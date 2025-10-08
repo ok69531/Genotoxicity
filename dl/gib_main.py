@@ -185,6 +185,9 @@ def main():
                 elif args.model == 'vgib':
                     params = (deepcopy(model.state_dict()), deepcopy(classifier.state_dict()))
                     optim_params = deepcopy(optimizer.state_dict())
+                elif args.model == 'gsat':
+                    params = deepcopy(model.state_dict())
+                    optim_params = deepcopy(optimizer.state_dict())
                 
         val_losses.append(best_val_loss); test_losses.append(final_test_loss)
         val_aucs.append(best_val_auc); test_aucs.append(final_test_auc)
